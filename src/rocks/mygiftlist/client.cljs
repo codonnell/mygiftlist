@@ -3,12 +3,13 @@
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
             [com.fulcrologic.fulcro.dom :as dom]
+            [com.fulcrologic.semantic-ui.elements.header.ui-header :refer [ui-header]]
             [taoensso.timbre :as log]))
 
 (defsc Root [this _props]
   {:query []
    :initial-state {}}
-  (dom/div "Hello World!"))
+  (ui-header {:as "h1"} "Hello World"))
 
 (defn ^:export refresh []
   (log/info "Hot code reload...")
