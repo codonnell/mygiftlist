@@ -10,31 +10,26 @@
             [taoensso.timbre :as log]))
 
 (defn auth-display []
-  (let [auth0 (auth/use-auth0)
-        is-authenticated (.-isAuthenticated auth0)
-        login-with-popup (.-loginWithPopup auth0)]
-    (dom/div {}
-      "Is authenticated:" (str is-authenticated)
-      (dom/button {:onClick #(login-with-popup #js {})}
-        "Login"))))
+  (dom/div {}
+    (dom/button {:onClick #(auth/login)}
+      "Login")
+    (dom/button {:onClick #(auth/is-authenticated?)}
+      "Check authenticated")))
 
 (defsc Root [this _props]
   {:query []
    :initial-state {}}
-  (dom/create-element
-    auth/auth0-provider
-    (clj->js
-      {:domain config/AUTH0_DOMAIN
-       :client_id config/AUTH0_CLIENT_ID
-       :redirect_uri (.. js/window -location -origin)
-       :children [(ui-header {:as "h1"} "Hello World")
-                  (dom/create-element auth-display)]})))
+  (dom/div {}
+    (ui-header {:as "h1"} "Hello World")
+    (dom/create-element auth-display)))
 
 (defn ^:export refresh []
   (log/info "Hot code reload...")
+  (auth/create-auth0-client!)
   (app/mount! SPA Root "app"))
 
 (defn ^:export init []
   (log/info "Application starting...")
+  (auth/create-auth0-client!)
   (routing/start!)
   (app/mount! SPA Root "app"))
