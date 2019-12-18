@@ -1,13 +1,26 @@
 (ns rocks.mygiftlist.auth
-  (:require ["react" :refer [useContext useState createContext useEffect createElement]]
-            ["@auth0/auth0-spa-js" :as create-auth0-client]
+  (:require ["@auth0/auth0-spa-js" :as create-auth0-client]
             [com.fulcrologic.fulcro.dom :as dom]
+            [com.fulcrologic.fulcro.ui-state-machines :as uism :refer [defstatemachine]]
             [com.wsscode.common.async-cljs :refer [go-promise <!p]]
             [clojure.core.async :refer [go]]
             [clojure.string :as str]
             [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.config :as config]
             [taoensso.timbre :as log]))
+
+(defstatemachine auth-machine
+  {::uism/actor-name #{:actor/user}
+
+   ::uism/aliases {:user-id [:actor/user :user/id]
+                   :user-email [:actor/user :user/email]}
+
+   ::uism/states {:initial {::uism/events
+                            {::uism/started
+                             {::uism/target-states #{:state/authenticating}
+                              ::uism/handler (fn [env]
+                                               ;; Start creating auth0 client and getting auth here
+                                               (uism/activate env :state/authenticating))}}}}})
 
 (defonce auth0-client (atom nil))
 
