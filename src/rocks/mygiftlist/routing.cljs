@@ -8,7 +8,9 @@
 (defonce history (pushy/pushy
                    (fn [path]
                      (let [route-segments (into [] (drop 1) (str/split (first (str/split path "?")) "/"))]
-                       (dr/change-route SPA route-segments)))
+                       (if (seq route-segments)
+                         (dr/change-route SPA route-segments)
+                         (dr/change-route SPA ["home"]))))
                    identity))
 
 (defn start! []

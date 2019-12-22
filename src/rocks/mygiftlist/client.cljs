@@ -4,12 +4,25 @@
             [rocks.mygiftlist.config :as config]
             [rocks.mygiftlist.routing :as routing]
             [clojure.core.async :refer [go]]
+            [clojure.string :as str]
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
             [com.fulcrologic.fulcro.dom :as dom]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
+            [com.fulcrologic.fulcro.ui-state-machines :as uism]
             [com.fulcrologic.semantic-ui.elements.header.ui-header :refer [ui-header]]
             [taoensso.timbre :as log]))
+
+(defsc CurrentUser [this {:user/keys [id email]}]
+  {:query [:user/id :user/email]
+   :ident (fn [] [:component/id :current-user])
+   :initial-state {:user/id "unauthenticated"
+                   :user/email "unauthenticated@example.com"}}
+  (dom/div {}
+    (dom/div {} (str "User id: " id))
+    (dom/div {} (str "User email: " email))))
+
+(def ui-current-user (comp/factory CurrentUser))
 
 (defsc AuthDisplay [this _]
   (dom/div {}
@@ -20,13 +33,15 @@
 
 (def ui-auth-display (comp/factory AuthDisplay))
 
-(defsc Home [this _]
-  {:query []
+(defsc Home [this {:keys [current-user] :as props}]
+  {:query [{:current-user (comp/get-query CurrentUser)}]
    :ident (fn [] [:component/id :home])
    :route-segment ["home"]
-   :initial-state {}}
+   :initial-state {:current-user {}}}
   (dom/div :.ui.container.segment
-    (dom/h3 "Home Screen")))
+    (dom/h3 "Home Screen")
+    (when current-user
+      (ui-current-user current-user))))
 
 (defsc LoginForm [this _]
   {:query []
@@ -40,7 +55,7 @@
 
 (def ui-main-router (comp/factory MainRouter))
 
-(defsc Root [this {:root/keys [router]}]
+(defsc Root [this {:root/keys [router] :as props}]
   {:query [{:root/router (comp/get-query MainRouter)}]
    :initial-state {:root/router {}}}
   (dom/div {}
@@ -52,14 +67,22 @@
   (log/info "Hot code reload...")
   (app/mount! SPA Root "app"))
 
+(defn spy [x]
+  (println x)
+  x)
+
 (defn ^:export init []
   (log/info "Application starting...")
   (go
     (app/mount! SPA Root "app")
     (routing/start!)
     (<! (auth/create-auth0-client!))
+    (when (str/includes? (.. js/window -location -search) "code=")
+      (<! (auth/handle-redirect-callback)))
     (if-let [authenticated (<! (auth/is-authenticated?))]
-      (comp/transact! SPA [(routing/route-to {:route-string "/home"})])
+      (let [{:strs [sub email]} (spy (js->clj (<! (auth/get-user-info))))]
+        (comp/transact! SPA [(auth/set-current-user {:user/id sub :user/email email})
+                             (routing/route-to {:route-string "/home"})]))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})])
       ;; Add current user info to app state and route to user home
       ;; Add anon user info to app state and route to anon home
