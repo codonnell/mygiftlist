@@ -3,19 +3,32 @@
  :nrepl {:port 9000
          :middleware [cider.nrepl/cider-middleware
                       refactor-nrepl.middleware/wrap-refactor]}
- :builds {:main {:target     :browser
+ :builds {:dev {:target     :browser
+                :output-dir "resources/public/js"
+                :asset-path "/js"
+
+                :modules    {:main {:entries [rocks.mygiftlist.client]
+                                    :init-fn rocks.mygiftlist.client/init}}
+
+                :closure-defines {rocks.mygiftlist.config/AUTH0_CLIENT_ID "KggOu3LWB3M7tZlX3o3thF3hJEAj8lmx"
+                                  rocks.mygiftlist.config/AUTH0_DOMAIN "mygiftlistrocks-dev.auth0.com"
+                                  rocks.mygiftlist.config/AUTH0_AUDIENCE "https://mygiftlist.rocks"
+                                  rocks.mygiftlist.config/AUTH0_CONNECTION "Username-Password-Authentication"}
+
+                :devtools   {:watch-dir "resources/public"
+                             :after-load rocks.mygiftlist.client/refresh
+                             :preloads [com.fulcrologic.fulcro.inspect.preload
+                                        rocks.mygiftlist.development-preload]}}
+          :prod {:target     :browser
                  :output-dir "resources/public/js"
                  :asset-path "/js"
 
                  :modules    {:main {:entries [rocks.mygiftlist.client]
                                      :init-fn rocks.mygiftlist.client/init}}
 
+                 :compiler-options {:optimizations :advanced}
+
                  :closure-defines {rocks.mygiftlist.config/AUTH0_CLIENT_ID "M7rSTO4mTP8V2Z3vBgynF2JZ0q7bVJGC"
                                    rocks.mygiftlist.config/AUTH0_DOMAIN "mygiftlistrocks.auth0.com"
                                    rocks.mygiftlist.config/AUTH0_AUDIENCE "https://mygiftlist.rocks"
-                                   }
-
-                 :devtools   {:watch-dir "resources/public"
-                              :after-load rocks.mygiftlist.client/refresh
-                              :preloads [com.fulcrologic.fulcro.inspect.preload
-                                         rocks.mygiftlist.development-preload]}}}}
+                                   rocks.mygiftlist.config/AUTH0_CONNECTION "Username-Password-Authentication"}}}}

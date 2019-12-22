@@ -15,7 +15,8 @@
 (defn create-auth0-client! []
   (go (reset! auth0-client (<!p (create-auth0-client #js {:domain config/AUTH0_DOMAIN
                                                           :client_id config/AUTH0_CLIENT_ID
-                                                          :audience config/AUTH0_AUDIENCE})))))
+                                                          :audience config/AUTH0_AUDIENCE
+                                                          :connection config/AUTH0_CONNECTION})))))
 
 (defn is-authenticated? []
   (go (<!p (.isAuthenticated @auth0-client))))
