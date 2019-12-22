@@ -11,18 +11,40 @@
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
             [com.fulcrologic.fulcro.ui-state-machines :as uism]
             [com.fulcrologic.semantic-ui.elements.header.ui-header :refer [ui-header]]
+            [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
+            [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
+            [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
             [taoensso.timbre :as log]))
 
 (defsc CurrentUser [this {:user/keys [id email]}]
   {:query [:user/id :user/email]
    :ident (fn [] [:component/id :current-user])
-   :initial-state {:user/id "unauthenticated"
-                   :user/email "unauthenticated@example.com"}}
+   :initial-state {}}
   (dom/div {}
     (dom/div {} (str "User id: " id))
     (dom/div {} (str "User email: " email))))
 
 (def ui-current-user (comp/factory CurrentUser))
+
+(defsc Navbar [this {:keys [current-user]}]
+  {:query [{:current-user (comp/get-query CurrentUser)}]
+   :ident (fn [] [:component/id :navbar])
+   :initial-state {:current-user {}}}
+  (let [logged-in (seq current-user)]
+    (ui-menu {:secondary true}
+      (ui-menu-item {:name "home"
+                     :active false
+                     :onClick #(comp/transact! this [(routing/route-to {:route-string (if logged-in "/home" "/login")})])})
+      (ui-menu-menu {:position "right"}
+        (if logged-in
+          (ui-menu-item {:name "logout"
+                         :active false
+                         :onClick #(auth/logout)})
+          (ui-menu-item {:name "login"
+                         :active false
+                         :onClick #(auth/login)}))))))
+
+(def ui-navbar (comp/factory Navbar))
 
 (defsc AuthDisplay [this _]
   (dom/div {}
@@ -40,7 +62,7 @@
    :initial-state {:current-user {}}}
   (dom/div :.ui.container.segment
     (dom/h3 "Home Screen")
-    (when current-user
+    (when (seq current-user)
       (ui-current-user current-user))))
 
 (defsc LoginForm [this _]
@@ -55,10 +77,13 @@
 
 (def ui-main-router (comp/factory MainRouter))
 
-(defsc Root [this {:root/keys [router] :as props}]
-  {:query [{:root/router (comp/get-query MainRouter)}]
-   :initial-state {:root/router {}}}
+(defsc Root [this {:root/keys [router navbar] :as props}]
+  {:query [{:root/router (comp/get-query MainRouter)}
+           {:root/navbar (comp/get-query Navbar)}]
+   :initial-state {:root/router {}
+                   :root/navbar {}}}
   (dom/div {}
+    (ui-navbar navbar)
     (ui-header {:as "h1"} "Hello World")
     (ui-auth-display)
     (ui-main-router router)))
