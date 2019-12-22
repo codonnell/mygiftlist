@@ -10,9 +10,10 @@
             [com.fulcrologic.fulcro.dom :as dom]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
             [com.fulcrologic.fulcro.ui-state-machines :as uism]
-            [com.fulcrologic.semantic-ui.elements.header.ui-header :refer [ui-header]]
+            [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
+            [com.fulcrologic.semantic-ui.collections.menu.ui-menu-header :refer [ui-menu-header]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
             [taoensso.timbre :as log]))
 
@@ -40,38 +41,63 @@
           (ui-menu-item {:name "logout"
                          :active false
                          :onClick #(auth/logout)})
-          (ui-menu-item {:name "login"
-                         :active false
-                         :onClick #(auth/login)}))))))
+          (ui-menu-item {:active false
+                         :onClick #(auth/login)}
+            "Login/Signup"))))))
 
 (def ui-navbar (comp/factory Navbar))
 
-(defsc AuthDisplay [this _]
-  (dom/div {}
-    (dom/button {:onClick #(auth/login)}
-      "Login")
-    (dom/button {:onClick #(auth/is-authenticated?)}
-      "Check authenticated")))
+(defsc LeftNav [this _]
+  {:query []
+   :ident (fn [] [:component/id :left-nav])
+   :initial-state {}}
+  (ui-menu {:vertical true :className "leftnav menu"}
+    (ui-menu-item {}
+      (ui-menu-header {} "My Lists")
+      (ui-menu-menu {}
+        (ui-menu-item {:active false
+                       :onClick #(js/console.log "Nav birthday 2019")}
+          (dom/div "Birthday 2019"))
+        (ui-menu-item {:active false
+                       :onClick #(js/console.log "Nav christmas 2019")}
+          (dom/div "Christmas 2019"))))
+    (ui-menu-item {}
+      (ui-menu-header {} "Shared Lists")
+      (ui-menu-menu {}
+        (ui-menu-item {:active false
+                       :onClick #(js/console.log "Nav birthday 2019")}
+          (dom/div "Birthday 2019")
+          (dom/div "- Marty McFly"))
+        (ui-menu-item {:active false
+                       :onClick #(js/console.log "Nav christmas 2019")}
+          (dom/div "Christmas 2019")
+          (dom/div "- marty@example.com"))))))
 
-(def ui-auth-display (comp/factory AuthDisplay))
+(def ui-left-nav (comp/factory LeftNav))
 
 (defsc Home [this {:keys [current-user] :as props}]
   {:query [{:current-user (comp/get-query CurrentUser)}]
    :ident (fn [] [:component/id :home])
    :route-segment ["home"]
    :initial-state {:current-user {}}}
-  (dom/div :.ui.container.segment
-    (dom/h3 "Home Screen")
-    (when (seq current-user)
-      (ui-current-user current-user))))
+  (dom/div :.home.container
+    (ui-left-nav)
+    (dom/div {}
+      (dom/h3 "Home Screen")
+      (when (seq current-user)
+        (ui-current-user current-user)))))
 
 (defsc LoginForm [this _]
   {:query []
    :ident (fn [] [:component/id :login])
    :route-segment ["login"]
    :initial-state {}}
-  (dom/div :.ui.container.segment
-    (dom/h3 "Login Screen")))
+  (dom/div :.login.container
+    (dom/div "In order to view and create gift lists, you need to...")
+    (dom/div (ui-button {:primary true
+                         :className "login combined-button"
+                         :onClick #(auth/login)}
+               "Log in or sign up"))))
 
 (defrouter MainRouter [_ _] {:router-targets [LoginForm Home]})
 
@@ -84,17 +110,11 @@
                    :root/navbar {}}}
   (dom/div {}
     (ui-navbar navbar)
-    (ui-header {:as "h1"} "Hello World")
-    (ui-auth-display)
     (ui-main-router router)))
 
 (defn ^:export refresh []
   (log/info "Hot code reload...")
   (app/mount! SPA Root "app"))
-
-(defn spy [x]
-  (println x)
-  x)
 
 (defn ^:export init []
   (log/info "Application starting...")
@@ -105,7 +125,7 @@
     (when (str/includes? (.. js/window -location -search) "code=")
       (<! (auth/handle-redirect-callback)))
     (if-let [authenticated (<! (auth/is-authenticated?))]
-      (let [{:strs [sub email]} (spy (js->clj (<! (auth/get-user-info))))]
+      (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
         (comp/transact! SPA [(auth/set-current-user {:user/id sub :user/email email})
                              (routing/route-to {:route-string "/home"})]))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})])

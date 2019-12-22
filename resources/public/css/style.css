@@ -1,0 +1,15 @@
+.home.container {
+  display: flex;
+}
+
+.login.container {
+  text-align: center;
+}
+
+.login.combined-button {
+  margin: 10px;
+}
+
+.leftnav.menu {
+  margin-right: 20px;
+}
