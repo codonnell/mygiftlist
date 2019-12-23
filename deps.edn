@@ -1,4 +1,7 @@
-{:deps    {com.wsscode/pathom        {:mvn/version "2.2.28"}
+{:paths   ["src" "resources"]
+ :deps    {com.wsscode/pathom        {:mvn/version "2.2.28"}
+           com.datomic/client-cloud  {:mvn/version "0.8.81"}
+           com.datomic/ion           {:mvn/version "0.9.35"}
            com.fulcrologic/fulcro    {:mvn/version "3.1.1"}
            com.taoensso/timbre       {:mvn/version "4.10.0"}
            org.clojure/clojurescript {:mvn/version "1.10.597"}}
