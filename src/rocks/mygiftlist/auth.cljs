@@ -4,9 +4,8 @@
             [com.fulcrologic.fulcro.mutations :as m :refer [defmutation]]
             [com.fulcrologic.fulcro.ui-state-machines :as uism :refer [defstatemachine]]
             [com.wsscode.common.async-cljs :refer [go-promise <!p]]
-            [clojure.core.async :refer [go]]
+            [clojure.core.async :refer [go <!]]
             [clojure.string :as str]
-            [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.config :as config]
             [taoensso.timbre :as log]))
 

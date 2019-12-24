@@ -3,10 +3,12 @@
             [rocks.mygiftlist.auth :as auth]
             [rocks.mygiftlist.config :as config]
             [rocks.mygiftlist.routing :as routing]
+            [rocks.mygiftlist.model.user :as user]
             [clojure.core.async :refer [go]]
             [clojure.string :as str]
             [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
+            [com.fulcrologic.fulcro.data-fetch :as df]
             [com.fulcrologic.fulcro.dom :as dom]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
             [com.fulcrologic.fulcro.ui-state-machines :as uism]
@@ -75,17 +77,38 @@
 
 (def ui-left-nav (comp/factory LeftNav))
 
-(defsc Home [this {:keys [current-user] :as props}]
-  {:query [{:current-user (comp/get-query CurrentUser)}]
+(defsc User [this {::user/keys [id email auth0-id]}]
+  {:query [::user/id ::user/email ::user/auth0-id]
+   :ident ::user/id}
+  (dom/div {}
+    (str "ID: " id ", email: " email ", auth0 ID: " auth0-id)))
+
+(def ui-user (comp/factory User))
+
+(defsc AllUsers [this {:keys [all-users] :as props}]
+  {:query [{:all-users (comp/get-query User)}]
+   :ident (fn [] [:component/id :all-users])
+   :initial-state {:all-users []}}
+  (dom/div {}
+    (mapv ui-user all-users)))
+
+(def ui-all-users (comp/factory AllUsers))
+
+(defsc Home [this {:keys [users current-user] :as props}]
+  {:query [{:current-user (comp/get-query CurrentUser)}
+           {:users (comp/get-query AllUsers)}]
    :ident (fn [] [:component/id :home])
    :route-segment ["home"]
-   :initial-state {:current-user {}}}
+   :initial-state {:current-user {}
+                   :users {}}}
   (dom/div :.home.container
     (ui-left-nav)
     (dom/div {}
       (dom/h3 "Home Screen")
       (when (seq current-user)
-        (ui-current-user current-user)))))
+        (ui-current-user current-user))
+      (when (seq current-user)
+        (ui-all-users users)))))
 
 (defsc LoginForm [this _]
   {:query []
@@ -127,7 +150,8 @@
     (if-let [authenticated (<! (auth/is-authenticated?))]
       (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
         (comp/transact! SPA [(auth/set-current-user {:user/id sub :user/email email})
-                             (routing/route-to {:route-string "/home"})]))
+                             (routing/route-to {:route-string "/home"})])
+        (df/load! SPA [:component/id :all-users] AllUsers))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})])
       ;; Add current user info to app state and route to user home
       ;; Add anon user info to app state and route to anon home
@@ -136,3 +160,7 @@
       ;; because we're using authorization code flow.
       )
     ))
+
+(comment
+  (df/load! SPA [:component/id :all-users] AllUsers)
+  )

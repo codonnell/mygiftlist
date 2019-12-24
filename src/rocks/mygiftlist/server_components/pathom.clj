@@ -3,7 +3,7 @@
    [taoensso.timbre :as log]
    [com.wsscode.pathom.connect :as pc]
    [com.wsscode.pathom.core :as p]
-   [com.wsscode.common.async-clj :refer [let-chan]]
+   [com.wsscode.common.async-cljs :refer [let-chan]]
    [clojure.core.async :as async]
    [rocks.mygiftlist.ion :as ion]
    [rocks.mygiftlist.model.user :as user]))
@@ -16,7 +16,7 @@
      (update ::pc/index-resolvers #(into {} (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [index-explorer user/all-users-resolver])
+(def all-resolvers [index-explorer user/all-users-resolver user/user-resolver])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.

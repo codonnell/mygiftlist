@@ -4,9 +4,9 @@
    [com.fulcrologic.fulcro.server.api-middleware :refer [handle-api-request
                                                          wrap-transit-params
                                                          wrap-transit-response]]
+   [ring.middleware.jwt :as jwt]
    [taoensso.timbre :as log]))
 
-;; TODO: Respond here with index.html
 (def ^:private not-found-handler
   (fn [req]
     {:status  404
@@ -16,17 +16,23 @@
 (defn wrap-api [handler uri]
   (fn [request]
     (if (= uri (:uri request))
-      #_{:status 200
-       :headers {"Content-Type" "text/plain"}
-       :body "Success!"}
       (handle-api-request
         (:transit-params request)
         (fn [tx] (parser {:ring/request request} tx)))
       (handler request))))
 
+(defn spy [handler]
+  (fn [req]
+    (println req)
+    (handler req)))
+
+;; TODO: Figure out config and parameterize jwk-endpoint
 (defn api-middleware [handler]
   (-> handler
     (wrap-api "/api")
+    (jwt/wrap-jwt {:alg          :RS256
+                   :jwk-endpoint "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"})
+    spy
     wrap-transit-params
     wrap-transit-response))
 

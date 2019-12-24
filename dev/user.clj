@@ -9,7 +9,7 @@
    [clojure.pprint :refer [pprint]]
    [org.httpkit.server :as http-kit]
    [ring.util.response :as resp]
-   [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+   [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
    [taoensso.timbre :as log]))
 
 ;; ==================== SERVER ====================
@@ -21,7 +21,7 @@
 (def middleware
   (-> not-found-handler
     middleware/api-middleware
-    (wrap-defaults site-defaults)))
+    (wrap-defaults (assoc api-defaults :static {:resources "public"}))))
 
 (defstate http-server
   :start
