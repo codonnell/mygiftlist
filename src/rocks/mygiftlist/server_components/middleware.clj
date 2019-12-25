@@ -1,6 +1,7 @@
 (ns rocks.mygiftlist.server-components.middleware
   (:require
    [rocks.mygiftlist.server-components.pathom :refer [parser]]
+   [rocks.mygiftlist.config :as config]
    [com.fulcrologic.fulcro.server.api-middleware :refer [handle-api-request
                                                          wrap-transit-params
                                                          wrap-transit-response]]
@@ -23,7 +24,7 @@
 
 (defn spy [handler]
   (fn [req]
-    (println req)
+    (log/debug req)
     (handler req)))
 
 ;; TODO: Figure out config and parameterize jwk-endpoint
@@ -31,10 +32,10 @@
   (-> handler
     (wrap-api "/api")
     (jwt/wrap-jwt {:alg          :RS256
-                   :jwk-endpoint "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"})
+                   :jwk-endpoint (:jwk-endpoint (config/get-config config/environment))})
     spy
     wrap-transit-params
     wrap-transit-response))
 
-(def handler
-  (api-middleware not-found-handler))
+;; (def handler
+;;   (api-middleware not-found-handler))

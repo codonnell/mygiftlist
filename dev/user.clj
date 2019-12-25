@@ -5,12 +5,21 @@
    [clojure.spec.alpha :as s]
    [mount.core :as mount]
    [rocks.mygiftlist.server-components.middleware :as middleware]
+   [rocks.mygiftlist.config :as config]
    [mount.core :refer [defstate]]
    [clojure.pprint :refer [pprint]]
    [org.httpkit.server :as http-kit]
    [ring.util.response :as resp]
    [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
    [taoensso.timbre :as log]))
+
+;; ==================== CONFIG ====================
+
+(alter-var-root #'config/environment (constantly :dev))
+
+(defmethod config/get-config :dev [_]
+  {:db-name "my-db"
+   :jwk-endpoint "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"})
 
 ;; ==================== SERVER ====================
 

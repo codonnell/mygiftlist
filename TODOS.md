@@ -1,0 +1,4 @@
+- [x] Server-side configuration
+- [ ] All entity resolvers
+- [ ] Mutations
+- [ ] Remote loads via routing layer

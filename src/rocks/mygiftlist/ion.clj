@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [datomic.client.api :as d]
+   [rocks.mygiftlist.config :as config]
    [rocks.mygiftlist.ion.schema :as schema]
    [rocks.mygiftlist.model.user :as user]))
 
@@ -14,10 +15,8 @@ before calling this function."
               (d/client (edn/read-string (slurp r)))
               (throw (RuntimeException. "You need to add a resource datomic/ion/mygiftlistrocks/config.edn with your connection config")))))
 
-(def db-name "my-db")
-
 (defn get-connection []
-  (d/connect (get-client) {:db-name db-name}))
+  (d/connect (get-client) {:db-name (:db-name (config/get-config config/environment))}))
 
 (defn get-db []
   (d/db (get-connection)))
