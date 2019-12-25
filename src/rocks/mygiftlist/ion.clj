@@ -33,10 +33,12 @@ before calling this function."
   (d/create-database client {:db-name db-name})
   (def conn (d/connect client {:db-name db-name}))
   (d/transact conn {:tx-data schema/schema})
-  (d/transact conn {:tx-data [#::user {:id (java.util.UUID/randomUUID)
-                                       :auth0-id "auth0|5dc81bfc1658c30e5fe9b877"
-                                       :email "bob@example.com"
-                                       :created-at (java.util.Date.)}]})
+  (d/transact (get-connection) {:tx-data [#::user {:id (java.util.UUID/randomUUID)
+                                                   :auth0-id "auth0|5dc81bfc1658c30e5fe9b877"
+                                                   :email "bob@example.com"
+                                                   :created-at (java.util.Date.)
+                                                   :given-name "Bob"
+                                                   :family-name "Example"}]})
   (d/q '{:find [(pull ?u [::user/id ::user/auth0-id ::user/email])]
          :where [[?u ::user/id]]}
     (get-db))

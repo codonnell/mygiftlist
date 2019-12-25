@@ -16,7 +16,7 @@
      (update ::pc/index-resolvers #(into {} (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [index-explorer user/all-users-resolver user/user-resolver])
+(def all-resolvers [index-explorer user/user-resolvers])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -47,7 +47,8 @@
                                                          ;; environment, like the server config, database connections, etc.
                                                          (assoc env
                                                            :db (ion/get-db) ; real datomic would use (d/db db-connection)
-                                                           :connection (ion/get-connection))))
+                                                           :connection (ion/get-connection)
+                                                           :requester-auth0-id (get-in env [:ring/request :claims :sub]))))
                                     (preprocess-parser-plugin log-requests)
                                     p/error-handler-plugin
                                     p/request-cache-plugin
@@ -62,5 +63,6 @@
                                     tx))))))
 
 (comment
-  (parser {} [{:all-users [::user/id]}])
+  (parser {:ring/request {:claims {:sub "auth0|5dc81bfc1658c30e5fe9b877"}}}
+    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name]}])
   )

@@ -27,7 +27,6 @@
     (log/debug req)
     (handler req)))
 
-;; TODO: Figure out config and parameterize jwk-endpoint
 (defn api-middleware [handler]
   (-> handler
     (wrap-api "/api")
