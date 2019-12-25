@@ -6,7 +6,8 @@
    [com.wsscode.common.async-cljs :refer [let-chan]]
    [clojure.core.async :as async]
    [rocks.mygiftlist.ion :as ion]
-   [rocks.mygiftlist.model.user :as user]))
+   [rocks.mygiftlist.type.user :as user]
+   [rocks.mygiftlist.model.user :as model.user]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -16,7 +17,7 @@
      (update ::pc/index-resolvers #(into {} (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [index-explorer user/user-resolvers])
+(def all-resolvers [index-explorer model.user/user-resolvers])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.

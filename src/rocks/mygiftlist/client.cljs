@@ -3,7 +3,7 @@
             [rocks.mygiftlist.auth :as auth]
             [rocks.mygiftlist.config :as config]
             [rocks.mygiftlist.routing :as routing]
-            [rocks.mygiftlist.model.user :as user]
+            [rocks.mygiftlist.type.user :as user]
             [clojure.core.async :refer [go]]
             [clojure.string :as str]
             [com.fulcrologic.fulcro.application :as app]

@@ -1,9 +1,9 @@
 (ns rocks.mygiftlist.ion.schema
-  (:require [rocks.mygiftlist.model.gift :as gift]
-            [rocks.mygiftlist.model.gift-list :as gift-list]
-            [rocks.mygiftlist.model.gift-list.invitation :as invitation]
-            [rocks.mygiftlist.model.gift-list.revocation :as revocation]
-            [rocks.mygiftlist.model.user :as user]))
+  (:require [rocks.mygiftlist.type.gift :as gift]
+            [rocks.mygiftlist.type.gift-list :as gift-list]
+            [rocks.mygiftlist.type.gift-list.invitation :as invitation]
+            [rocks.mygiftlist.type.gift-list.revocation :as revocation]
+            [rocks.mygiftlist.type.user :as user]))
 
 (def user-schema
   [{:db/ident ::user/id

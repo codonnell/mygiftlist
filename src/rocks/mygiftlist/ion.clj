@@ -6,7 +6,7 @@
    [datomic.client.api :as d]
    [rocks.mygiftlist.config :as config]
    [rocks.mygiftlist.ion.schema :as schema]
-   [rocks.mygiftlist.model.user :as user]))
+   [rocks.mygiftlist.type.user :as user]))
 
 (def get-client
   "Return a shared client. Set datomic/ion/starter/config.edn resource
@@ -29,6 +29,7 @@ before calling this function."
 
 (comment
   (def client (get-client))
+  (d/delete-database (get-client) {:db-name "my-db"})
   (def db-name "my-db")
   (d/create-database client {:db-name db-name})
   (def conn (d/connect client {:db-name db-name}))
