@@ -7,7 +7,11 @@
    [clojure.core.async :as async]
    [rocks.mygiftlist.ion :as ion]
    [rocks.mygiftlist.type.user :as user]
-   [rocks.mygiftlist.model.user :as model.user]))
+   [rocks.mygiftlist.type.gift :as gift]
+   [rocks.mygiftlist.type.gift-list :as gift-list]
+   [rocks.mygiftlist.model.user :as model.user]
+   [rocks.mygiftlist.model.gift :as model.gift]
+   [rocks.mygiftlist.model.gift-list :as model.gift-list]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -17,7 +21,10 @@
      (update ::pc/index-resolvers #(into {} (map (fn [[k v]] [k (dissoc v ::pc/resolve)])) %))
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
-(def all-resolvers [index-explorer model.user/user-resolvers])
+(def all-resolvers [index-explorer
+                    model.user/user-resolvers
+                    model.gift/gift-resolvers
+                    model.gift-list/gift-list-resolvers])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -47,7 +54,7 @@
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.
                                                          (assoc env
-                                                           :db (ion/get-db) ; real datomic would use (d/db db-connection)
+                                                           :db (ion/get-db)
                                                            :connection (ion/get-connection)
                                                            :requester-auth0-id (get-in env [:ring/request :claims :sub]))))
                                     (preprocess-parser-plugin log-requests)
@@ -65,5 +72,16 @@
 
 (comment
   (parser {:ring/request {:claims {:sub "auth0|5dc81bfc1658c30e5fe9b877"}}}
-    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name]}])
+    #_[{[::gift-list/id #uuid "0ebaf3ee-7d0d-4573-880a-ad2cb8582ec7"]
+      [::gift-list/id ::gift-list/name ::gift-list/created-at
+       {::gift-list/gifts
+        [::gift/id ::gift/name ::gift/description]}]}]
+    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name
+                  {::user/created-gift-lists
+                   [::gift-list/id ::gift-list/name ::gift-list/created-at
+                    {::gift-list/gifts
+                     [::gift/id ::gift/name ::gift/description]}]}]}]
+    #_[{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name
+                  {::user/requested-gifts
+                   [::gift/id ::gift/name ::gift/description]}]}])
   )

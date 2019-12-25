@@ -1,4 +1,4 @@
-(ns rocks.mygiftlist.model.gift
+(ns rocks.mygiftlist.model.gift-list
   (:require
    [datomic.client.api :as d]
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
@@ -9,22 +9,20 @@
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
    [rocks.mygiftlist.type.gift-list.revocation :as revocation]))
 
-(defresolver gift-by-id-resolver [{:keys [db requester-auth0-id]} inputs]
-  {::pc/input #{::gift/id}
-   ::pc/output [::gift/name ::gift/description ::gift/url
-                {::gift/claimed-by [::user/id]} ::gift/claimed-at
-                {::gift/requested-by [::user/id]} ::gift/requested-at]
+(defresolver gift-list-by-id-resolver [{:keys [db requester-auth0-id]} inputs]
+  {::pc/input #{::gift-list/id}
+   ::pc/output [::gift-list/name ::gift-list/created-at ::gift-list/created-by
+                {::gift-list/gifts [::gift/id]}]
    ::pc/transform pc/transform-batch-resolver}
-  (query/batch-query-by ::gift/id
-    (d/q '{:find [(pull ?gift [::gift/id ::gift/name ::gift/description ::gift/url
-                               {::gift/claimed-by [::user/id]} ::gift/claimed-at
-                               {::gift/requested-by [::user/id]} ::gift/requested-at])]
+  (query/batch-query-by ::gift-list/id
+    (d/q '{:find [(pull ?gift-list [::gift-list/id ::gift-list/name
+                               ::gift-list/created-at ::gift-list/created-by
+                               {::gift-list/gifts [::gift/id]}])]
            :in [$ ?requester-auth0-id [?id ...]]
            :where [[?requester ::user/auth0-id ?requester-auth0-id]
-                   [?gift ::gift/id ?id]
-                   [?gift-list ::gift-list/gifts ?gift]
+                   [?gift-list ::gift-list/id ?id]
                    (or-join [?gift-list ?requester]
-                     [?requester ::gift/requested-by ?requester]
+                     [?gift-list ::gift-list/created-by ?requester]
                      (and
                        [?invitation ::invitation/gift-list ?gift-list]
                        [?invitation ::invitation/accepted-by ?requester]
@@ -34,4 +32,4 @@
       db requester-auth0-id)
     inputs))
 
-(def gift-resolvers [gift-by-id-resolver])
+(def gift-list-resolvers [gift-list-by-id-resolver])

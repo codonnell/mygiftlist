@@ -4,10 +4,11 @@
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
    [rocks.mygiftlist.ion.query :as query]
    [rocks.mygiftlist.type.user :as user]
+   [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]))
 
-
+;; TODO: Add created-at resolver
 (defresolver all-users-resolver [{:keys [db]} input]
   {::pc/output [{:all-users [::user/id]}]}
   {:all-users (->> db
@@ -84,7 +85,7 @@
       db requester-auth0-id)
     inputs))
 
-(defresolver user-personal-data-resolver [{:keys [db requester-auth0-id]} inputs]
+(defresolver user-name-resolver [{:keys [db requester-auth0-id]} inputs]
   {::pc/input #{::user/id}
    ::pc/output [::user/given-name ::user/family-name]
    ::pc/transform pc/transform-batch-resolver}
@@ -109,13 +110,39 @@
       db requester-auth0-id)
     inputs))
 
+(defresolver user-requested-gifts-resolver [{:keys [db requester-auth0-id]} {::user/keys [id]}]
+  {::pc/input #{::user/id}
+   ::pc/output [{::user/requested-gifts [::gift/id]}]}
+  (->> id
+    (d/q '{:find [(pull ?u [{::gift/_requested-by [::gift/id]}])]
+           :in [$ ?requester-auth0-id ?id]
+           :where [[?u ::user/id ?id]
+                   [?u ::user/auth0-id ?requester-auth0-id]]}
+      db requester-auth0-id)
+    (mapv #(-> % first ::gift/_requested-by first))
+    (hash-map ::user/requested-gifts)))
+
+(defresolver user-created-gift-lists-resolver [{:keys [db requester-auth0-id]} {::user/keys [id]}]
+  {::pc/input #{::user/id}
+   ::pc/output [{::user/created-gift-lists [::gift-list/id]}]}
+  (->> id
+    (d/q '{:find [(pull ?u [{::gift-list/_created-by [::gift-list/id]}])]
+           :in [$ ?requester-auth0-id ?id]
+           :where [[?u ::user/id ?id]
+                   [?u ::user/auth0-id ?requester-auth0-id]]}
+      db requester-auth0-id)
+    (mapv #(-> % first ::gift-list/_created-by first))
+    (hash-map ::user/created-gift-lists)))
+
 (def user-resolvers
   [all-users-resolver
    user-by-id-resolver
    user-by-auth0-id-resolver
    user-by-email-resolver
    user-email-resolver
-   user-personal-data-resolver
+   user-name-resolver
+   user-requested-gifts-resolver
+   user-created-gift-lists-resolver
    ])
 
 (comment
