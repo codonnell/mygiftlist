@@ -39,9 +39,27 @@ before calling this function."
                                                    :created-at (java.util.Date.)
                                                    :given-name "Bob"
                                                    :family-name "Example"}]})
+  (d/transact (get-connection) {:tx-data [#::user {:id (java.util.UUID/randomUUID)
+                                                   :auth0-id "auth0|fake"
+                                                   :email "alice@example.com"
+                                                   :created-at (java.util.Date.)
+                                                   :given-name "Alice"
+                                                   :family-name "Example"}]})
   (d/q '{:find [(pull ?u [::user/id ::user/auth0-id ::user/email])]
          :where [[?u ::user/id]]}
     (get-db))
   (get-user-by-auth0-id [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name]
     "auth0|5dc81bfc1658c30e5fe9b877")
+  (d/q '{:find [(pull ?u [::user/id])]
+         :in [$ ?requester-id ?id]
+         :where [(or-join [?u]
+                   (and
+                     [?u ::user/id ?id]
+                     [?u ::user/id ?requester-id])
+                   (and
+                     [?u ::user/id ?id]
+                     [?requester ::user/id ?requester-id]
+                     [?grant :view-grant/grantor ?u]
+                     [?grant :view-grant/grantee ?requester]))]}
+    (get-db) (java.util.UUID/randomUUID) (java.util.UUID/randomUUID))
   )

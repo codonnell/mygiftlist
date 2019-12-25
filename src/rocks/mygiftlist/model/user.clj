@@ -32,73 +32,65 @@
 (defresolver user-by-email-resolver [{:keys [db requester-auth0-id]} {::keys [email]}]
   {::pc/input #{::email}
    ::pc/output [::id ::auth0-id]}
-  (let [q-where (fn [where-clause]
-                  (ffirst (d/q (assoc '{:find [(pull ?u [::id ::auth0-id])]
-                                        :in [$ ?requester-auth0-id ?email]}
-                                 :where where-clause)
-                            db requester-auth0-id email)))]
-    (first (sequence (comp (take 1) (keep q-where))
-             '[[[?u ::email ?email]
-                [?u ::auth0-id ?requester-auth0-id]]
-
-               [[?u ::email ?email]
-                [?gift-list ::gift-list/created-by ?u]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?accepter]
-                [?accepter ::auth0-id ?requester-auth0-id]]
-
-               [[?u ::email ?email]
-                [?list-owner ::auth0-id ?requester-auth0-id]
-                [?gift-list ::gift-list/created-by ?list-owner]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?u]]]))))
+  (ffirst (d/q '{:find [(pull ?u [::id ::auth0-id])]
+                 :in [$ ?requester-auth0-id ?email]
+                 :where [[?u ::email ?email]
+                         (or-join [?u ?requester-auth0-id]
+                           [?u ::auth0-id ?requester-auth0-id]
+                           (and
+                             [?gift-list ::gift-list/created-by ?u]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?accepter]
+                             [?accepter ::auth0-id ?requester-auth0-id])
+                           (and
+                             [?list-owner ::auth0-id ?requester-auth0-id]
+                             [?gift-list ::gift-list/created-by ?list-owner]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?u]))]}
+            db requester-auth0-id email)))
 
 (defresolver user-email-resolver [{:keys [db requester-auth0-id]} {::keys [id]}]
   {::pc/input #{::id}
    ::pc/output [::email]}
-  (let [q-where (fn [where-clause]
-                  (ffirst (d/q (assoc '{:find [(pull ?u [::email])]
-                                        :in [$ ?requester-auth0-id ?id]}
-                                 :where where-clause)
-                            db requester-auth0-id id)))]
-    (first (sequence (comp (take 1) (keep q-where))
-             '[[[?u ::auth0-id ?requester-auth0-id]]
-
-               [[?gift-list ::gift-list/created-by ?u]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?accepter]
-                [?accepter ::auth0-id ?requester-auth0-id]]
-
-               [[?list-owner ::auth0-id ?requester-auth0-id]
-                [?gift-list ::gift-list/created-by ?list-owner]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?u]]]))))
+  (ffirst (d/q '{:find [(pull ?u [::email])]
+                 :in [$ ?requester-auth0-id ?id]
+                 :where [(or-join [?u ?id ?requester-auth0-id]
+                           (and
+                             [?u ::auth0-id ?requester-auth0-id]
+                             [?u ::id ?id])
+                           (and
+                             [?gift-list ::gift-list/created-by ?u]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?accepter]
+                             [?accepter ::auth0-id ?requester-auth0-id])
+                           (and
+                             [?list-owner ::auth0-id ?requester-auth0-id]
+                             [?gift-list ::gift-list/created-by ?list-owner]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?u]))]}
+            db requester-auth0-id id)))
 
 (defresolver user-personal-data-resolver [{:keys [db requester-auth0-id]} {::keys [id]}]
   {::pc/input #{::id}
    ::pc/output [::given-name ::family-name]}
-  (let [q-where (fn [where-clause]
-                  (ffirst (d/q (assoc '{:find [(pull ?u [::given-name ::family-name])]
-                                        :in [$ ?requester-auth0-id ?id]}
-                                 :where where-clause)
-                            db requester-auth0-id id)))]
-    (first (sequence (comp (take 1) (keep q-where))
-             '[[[?u ::id ?id]
-                [?u ::auth0-id ?requester-auth0-id]]
-
-               [[?u ::id ?id]
-                [?u ::display-name true]
-                [?gift-list ::gift-list/created-by ?u]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?accepter]
-                [?accepter ::auth0-id ?requester-auth0-id]]
-
-               [[?u ::id ?id]
-                [?u ::display-name true]
-                [?list-owner ::auth0-id ?requester-auth0-id]
-                [?gift-list ::gift-list/created-by ?list-owner]
-                [?invitation ::invitation/gift-list ?gift-list]
-                [?invitation ::invitation/accepted-by ?u]]]))))
+  (ffirst (d/q '{:find [(pull ?u [::given-name ::family-name])]
+                 :in [$ ?requester-auth0-id ?id]
+                 :where [[?u ::id ?id]
+                         (or-join [?u ?requester-auth0-id]
+                           [?u ::auth0-id ?requester-auth0-id]
+                           (and
+                             [?u ::display-name true]
+                             [?gift-list ::gift-list/created-by ?u]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?accepter]
+                             [?accepter ::auth0-id ?requester-auth0-id])
+                           (and
+                             [?u ::display-name true]
+                             [?list-owner ::auth0-id ?requester-auth0-id]
+                             [?gift-list ::gift-list/created-by ?list-owner]
+                             [?invitation ::invitation/gift-list ?gift-list]
+                             [?invitation ::invitation/accepted-by ?u]))]}
+            db requester-auth0-id id)))
 
 (def user-resolvers
   [all-users-resolver
