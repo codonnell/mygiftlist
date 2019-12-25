@@ -76,7 +76,7 @@
       [::gift-list/id ::gift-list/name ::gift-list/created-at
        {::gift-list/gifts
         [::gift/id ::gift/name ::gift/description]}]}]
-    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name
+    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/created-at ::user/given-name ::user/family-name
                   {::user/created-gift-lists
                    [::gift-list/id ::gift-list/name ::gift-list/created-at
                     {::gift-list/gifts

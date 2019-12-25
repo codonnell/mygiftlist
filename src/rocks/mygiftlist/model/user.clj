@@ -8,7 +8,6 @@
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]))
 
-;; TODO: Add created-at resolver
 (defresolver all-users-resolver [{:keys [db]} input]
   {::pc/output [{:all-users [::user/id]}]}
   {:all-users (->> db
@@ -61,12 +60,12 @@
       db requester-auth0-id)
     inputs))
 
-(defresolver user-email-resolver [{:keys [db requester-auth0-id]} inputs]
+(defresolver user-data-resolver [{:keys [db requester-auth0-id]} inputs]
   {::pc/input #{::user/id}
-   ::pc/output [::user/email]
+   ::pc/output [::user/email ::user/created-at]
    ::pc/transform pc/transform-batch-resolver}
   (query/batch-query-by ::user/id
-    (d/q '{:find [(pull ?u [::user/id ::user/email])]
+    (d/q '{:find [(pull ?u [::user/id ::user/email ::user/created-at])]
            :in [$ ?requester-auth0-id [?id ...]]
            :where [(or-join [?u ?id ?requester-auth0-id]
                      (and
@@ -139,7 +138,7 @@
    user-by-id-resolver
    user-by-auth0-id-resolver
    user-by-email-resolver
-   user-email-resolver
+   user-data-resolver
    user-name-resolver
    user-requested-gifts-resolver
    user-created-gift-lists-resolver
