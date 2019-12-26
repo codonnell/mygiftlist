@@ -66,9 +66,9 @@
         ;; Understand that this makes the network responses much larger and should not be used in production.
         trace?      (not (nil? (System/getProperty "trace")))]
     (fn wrapped-parser [env tx]
-      (spy (async/<!! (real-parser env (if trace?
-                                         (conj tx :com.wsscode.pathom/trace)
-                                         tx)))))))
+      (async/<!! (real-parser env (if trace?
+                                    (conj tx :com.wsscode.pathom/trace)
+                                    tx))))))
 
 (comment
   (parser {:ring/request {:claims {:sub "auth0|5dc81bfc1658c30e5fe9b877"}}}
