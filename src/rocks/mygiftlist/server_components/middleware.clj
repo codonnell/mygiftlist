@@ -5,8 +5,7 @@
    [com.fulcrologic.fulcro.server.api-middleware :refer [handle-api-request
                                                          wrap-transit-params
                                                          wrap-transit-response]]
-   [ring.middleware.jwt :as jwt]
-   [taoensso.timbre :as log]))
+   [ring.middleware.jwt :as jwt]))
 
 (def ^:private not-found-handler
   (fn [req]
@@ -22,19 +21,13 @@
         (fn [tx] (parser {:ring/request request} tx)))
       (handler request))))
 
-(defn spy [handler]
-  (fn [req]
-    (log/debug req)
-    (handler req)))
-
 (defn api-middleware [handler]
   (-> handler
     (wrap-api "/api")
     (jwt/wrap-jwt {:alg          :RS256
                    :jwk-endpoint (:jwk-endpoint (config/get-config config/environment))})
-    spy
     wrap-transit-params
     wrap-transit-response))
 
-;; (def handler
-;;   (api-middleware not-found-handler))
+(def handler
+  (memoize #(api-middleware not-found-handler)))
