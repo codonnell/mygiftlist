@@ -13,13 +13,13 @@
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
             [taoensso.timbre :as log]))
 
-(defsc Home [this _]
-  {:query []
+(defsc Home [this {:keys [left-nav]}]
+  {:query [{:left-nav (comp/get-query ui.nav/LeftNav)}]
    :ident (fn [] [:component/id :home])
    :route-segment ["home"]
-   :initial-state {}}
+   :initial-state {:left-nav {}}}
   (dom/div :.home.container
-    (ui.nav/ui-left-nav)
+    (ui.nav/ui-left-nav left-nav)
     (dom/div {}
       (dom/h3 "Home Screen"))))
 

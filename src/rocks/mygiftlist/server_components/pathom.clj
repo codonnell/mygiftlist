@@ -66,17 +66,30 @@
         ;; Understand that this makes the network responses much larger and should not be used in production.
         trace?      (not (nil? (System/getProperty "trace")))]
     (fn wrapped-parser [env tx]
-      (async/<!! (real-parser env (if trace?
-                                    (conj tx :com.wsscode.pathom/trace)
-                                    tx))))))
+      (spy (async/<!! (real-parser env (if trace?
+                                         (conj tx :com.wsscode.pathom/trace)
+                                         tx)))))))
 
 (comment
   (parser {:ring/request {:claims {:sub "auth0|5dc81bfc1658c30e5fe9b877"}}}
+    #_[{:created-gift-lists [::gift-list/id ::gift-list/name]}]
+    [{[:component/id :left-nav]
+      [{:created-gift-lists [::gift-list/id ::gift-list/name]}
+       {:invited-gift-lists
+        [::gift-list/id ::gift-list/name
+         {::gift-list/created-by
+          [::user/id ::user/given-name ::user/family-name ::user/email]}]}]}]
+    #_[{:created-gift-lists
+      [::gift-list/id ::gift-list/name]}
+     {:invited-gift-lists
+      [::gift-list/id ::gift-list/name
+       {::gift-list/created-by
+        [::user/id ::user/given-name ::user/family-name ::user/email]}]}]
     #_[{[::gift-list/id #uuid "0ebaf3ee-7d0d-4573-880a-ad2cb8582ec7"]
       [::gift-list/id ::gift-list/name ::gift-list/created-at
        {::gift-list/gifts
         [::gift/id ::gift/name ::gift/description]}]}]
-    [{:all-users [::user/id ::user/auth0-id ::user/email ::user/created-at ::user/given-name ::user/family-name
+    #_[{:all-users [::user/id ::user/auth0-id ::user/email ::user/created-at ::user/given-name ::user/family-name
                   {::user/created-gift-lists
                    [::gift-list/id ::gift-list/name ::gift-list/created-at
                     {::gift-list/gifts

@@ -4,6 +4,7 @@
             [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.type.user :as user]
             [rocks.mygiftlist.ui.root :as ui.root]
+            [rocks.mygiftlist.ui.navigation :as ui.nav]
             [clojure.core.async :refer [go]]
             [clojure.string :as str]
             [com.fulcrologic.fulcro.application :as app]
@@ -26,7 +27,8 @@
     (if-let [authenticated (<! (auth/is-authenticated?))]
       (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
         (comp/transact! SPA [(auth/set-current-user #::user {:id sub :email email})
-                             (routing/route-to {:route-string "/home"})]))
+                             (routing/route-to {:route-string "/home"})])
+        (df/load! SPA [:component/id :left-nav] ui.nav/LeftNav))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})]))))
 
 (comment

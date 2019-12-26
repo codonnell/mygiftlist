@@ -8,7 +8,7 @@
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]))
 
-(defresolver all-users-resolver [{:keys [db]} input]
+(defresolver all-users-resolver [{:keys [db]} _]
   {::pc/output [{:all-users [::user/id]}]}
   {:all-users (->> db
                 (d/q '{:find [?id]

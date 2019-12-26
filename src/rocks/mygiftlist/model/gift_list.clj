@@ -7,7 +7,8 @@
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
-   [rocks.mygiftlist.type.gift-list.revocation :as revocation]))
+   [rocks.mygiftlist.type.gift-list.revocation :as revocation]
+   [taoensso.timbre :as log]))
 
 (defresolver gift-list-by-id-resolver [{:keys [db requester-auth0-id]} inputs]
   {::pc/input #{::gift-list/id}
@@ -32,4 +33,27 @@
       db requester-auth0-id)
     inputs))
 
-(def gift-list-resolvers [gift-list-by-id-resolver])
+(defresolver created-gift-lists-resolver [{:keys [db requester-auth0-id]} _]
+  {::pc/output [{:created-gift-lists [::gift-list/id]}]}
+  {:created-gift-lists (mapv first (d/q '{:find [(pull ?gift-list [::gift-list/id])]
+                                          :in [$ ?requester-auth0-id]
+                                          :where [[?u ::user/auth0-id ?requester-auth0-id]
+                                                  [?gift-list ::gift-list/created-by ?u]]}
+                                     db requester-auth0-id))})
+
+(defresolver invited-gift-lists-resolver [{:keys [db requester-auth0-id]} _]
+  {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
+  {:invited-gift-lists (mapv first (d/q '{:find [(pull ?gift-list [::gift-list/id])]
+                                          :in [$ ?requester-auth0-id]
+                                          :where [[?user ::user/auth0-id ?requester-auth0-id]
+                                                  [?invitation ::invitation/accepted-by ?user]
+                                                  [?invitation ::invitation/gift-list ?gift-list]
+                                                  (not-join [?gift-list ?user]
+                                                    [?revocation ::revocation/user ?user]
+                                                    [?revocation ::revocation/gift-list ?gift-list])]}
+                                     db requester-auth0-id))})
+
+(def gift-list-resolvers
+  [gift-list-by-id-resolver
+   created-gift-lists-resolver
+   invited-gift-lists-resolver])
