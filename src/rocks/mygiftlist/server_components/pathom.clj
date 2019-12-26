@@ -3,7 +3,7 @@
    [taoensso.timbre :as log]
    [com.wsscode.pathom.connect :as pc]
    [com.wsscode.pathom.core :as p]
-   [com.wsscode.common.async-cljs :refer [let-chan]]
+   [com.wsscode.common.async-clj :refer [let-chan]]
    [clojure.core.async :as async]
    [rocks.mygiftlist.ion :as ion]
    [rocks.mygiftlist.type.user :as user]
