@@ -3,6 +3,7 @@
            com.datomic/client-cloud  {:mvn/version "0.8.81"}
            com.datomic/ion           {:mvn/version "0.9.35"}
            com.fulcrologic/fulcro    {:mvn/version "3.1.1"}
+           org.clojure/core.async    {:mvn/version "0.6.532"}
            edn-query-language/eql    {:mvn/version "0.0.9"}
            ring/ring-core            {:mvn/version "1.8.0"}
            ring/ring-defaults        {:mvn/version "0.3.2"}
