@@ -2,7 +2,10 @@
  :deps    {com.wsscode/pathom        {:mvn/version "2.2.28"}
            com.datomic/client-cloud  {:mvn/version "0.8.81"}
            com.datomic/ion           {:mvn/version "0.9.35"}
-           com.fulcrologic/fulcro    {:mvn/version "3.1.1"}
+           ;; Patched version 3.1.1 to deal with dependency conflicts between
+           ;; fulcro and datomic JVM
+           com.fulcrologic/fulcro    {:local/root "../mygiftlist_fulcro"
+                                      :exclusions [org.clojure/clojurescript]}
            org.clojure/core.async    {:mvn/version "0.6.532"}
            edn-query-language/eql    {:mvn/version "0.0.9"}
            ring/ring-core            {:mvn/version "1.8.0"}
