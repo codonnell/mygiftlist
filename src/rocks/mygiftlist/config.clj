@@ -9,7 +9,9 @@
 (defmulti get-config (fn [env] env))
 
 (def get-ion-params
-  (memoize #(ion/get-params {:path "/datomic-shared/prod/mygiftlistrocks/"})))
+  (memoize #(->> {:path "/datomic-shared/prod/mygiftlistrocks/"}
+              ion/get-params
+              (into {} (map (fn [[k v]] [(keyword k) v]))))))
 
 (defmethod get-config :prod [_]
   (get-ion-params))
@@ -17,7 +19,7 @@
 (defn config-lambda
   "Lambda ion that returns the production config"
   [_]
-  (edn/write-str (ion/get-params {:path "/datomic-shared/prod/mygiftlistrocks/"})))
+  (edn/write-str (get-ion-params)))
 
 (comment
   )
