@@ -8,10 +8,10 @@
 
 (defmulti get-config (fn [env] env))
 
-(def get-ion-params
-  (memoize #(->> {:path "/datomic-shared/prod/mygiftlistrocks/"}
-              ion/get-params
-              (into {} (map (fn [[k v]] [(keyword k) v]))))))
+(defn get-ion-params []
+  (->> {:path "/datomic-shared/prod/mygiftlistrocks/"}
+    ion/get-params
+    (into {} (map (fn [[k v]] [(keyword k) v])))))
 
 (defmethod get-config :prod [_]
   (get-ion-params))
