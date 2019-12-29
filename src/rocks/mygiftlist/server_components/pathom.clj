@@ -70,7 +70,8 @@
 (comment
   (parser {:ring/request {:claims {:sub "auth0|abc123" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
     [{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
-      [::gift-list/name ::gift-list/created-at ::gift-list/created-by-id
+      [::gift-list/name ::gift-list/created-at
+       {::gift-list/created-by [::user/id]}
        {::gift-list/gifts [::gift/id]}]}]
     #_[{:created-gift-lists [::gift-list/id ::gift-list/name]}]
     #_[{[:component/id :left-nav]

@@ -14,24 +14,29 @@
 ;; TODO: Make created-by-id a join
 (defresolver gift-list-by-id-resolver [{::db/keys [pool] :keys [requester-auth0-id]} inputs]
   {::pc/input #{::gift-list/id}
-   ::pc/output [::gift-list/name ::gift-list/created-at ::gift-list/created-by-id
+   ::pc/output [::gift-list/name ::gift-list/created-at
+                {::gift-list/created-by [::user/id]}
                 {::gift-list/gifts [::gift/id]}]
    ::pc/transform pc/transform-batch-resolver}
   (let [ids (mapv ::gift-list/id inputs)
         raw-results (jdbc/execute! db/pool
                       (sql/format
-                        {:select [:gl.id :gl.name :gl.created_at :gl.created_by_id
+                        {:select [:gl.id :gl.name :gl.created_at :u.id
                                   [(sql/call :array_agg :g.id) :gift_ids]]
                          :from [[:gift_list :gl]]
-                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]]
+                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
+                                     [:user :u] [:= :u.id :gl.created_by_id]]
                          :where [:in :gl.id ids]
-                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id]})
+                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id :u.id]}
+                        :quoting :ansi)
                       db/query-opts)
         results (mapv (fn [{:keys [gift-ids] :as gift-list}]
                         (-> gift-list
                           (assoc ::gift-list/gifts
                             (mapv #(hash-map ::gift/id %) gift-ids))
-                          (dissoc :gift-ids)))
+                          (assoc-in [::gift-list/created-by ::user/id]
+                            (::user/id gift-list))
+                          (dissoc :gift-ids ::user/id)))
                   raw-results)]
     (println {:raw-results raw-results
               :results results})
@@ -91,12 +96,15 @@
   (let [ids [#uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
         raw-results (jdbc/execute! db/pool
                       (sql/format
-                        {:select [:gl.id :gl.name :gl.created_at :gl.created_by_id
+                        {:select [:gl.id :gl.name :gl.created_at
+                                  [(sql/call :array_agg :u.id) :created_by_ids]
                                   [(sql/call :array_agg :g.id) :gift_ids]]
                          :from [[:gift_list :gl]]
-                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]]
+                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
+                                     [:user :u] [:= :u.id :gl.created_by_id]]
                          :where [:in :gl.id [#uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]]
-                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id]})
+                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id]}
+                        :quoting :ansi)
                       db/query-opts)]
     raw-results)
   (jdbc/execute! db/pool ["SELECT * FROM gift"] db/query-opts)
