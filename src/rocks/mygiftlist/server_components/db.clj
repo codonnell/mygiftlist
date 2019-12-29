@@ -4,7 +4,8 @@
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as result-set]
             [next.jdbc.prepare :as p]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [honeysql.core :as sql]))
 
 ;; TODO: Parameterize db options
 ;; TODO: Look into `:reWriteBatchedInserts`
@@ -38,6 +39,16 @@
                                       :label-fn kebab))))
 
 (def query-opts {:builder-fn as-qualified-kebab-maps})
+
+(defn execute! [pool sql-map]
+  (jdbc/execute! pool
+    (sql/format sql-map :quoting :ansi)
+    query-opts))
+
+(defn execute-one! [pool sql-map]
+  (jdbc/execute-one! pool
+    (sql/format sql-map :quoting :ansi)
+    query-opts))
 
 (extend-protocol result-set/ReadableColumn
 
