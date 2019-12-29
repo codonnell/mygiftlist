@@ -1,23 +1,23 @@
 {:paths   ["src" "resources"]
  :deps    {com.wsscode/pathom        {:mvn/version "2.2.28"}
-           com.datomic/client-cloud  {:mvn/version "0.8.81"}
-           com.datomic/ion           {:mvn/version "0.9.35"}
-           ;; Patched version 3.1.1 to deal with dependency conflicts between
-           ;; fulcro and datomic JVM
-           com.fulcrologic/fulcro    {:local/root "../mygiftlist_fulcro"
-                                      :exclusions [org.clojure/clojurescript]}
+           com.fulcrologic/fulcro    {:mvn/version "3.1.1"}
            org.clojure/core.async    {:mvn/version "0.6.532"}
            edn-query-language/eql    {:mvn/version "0.0.9"}
            ring/ring-core            {:mvn/version "1.8.0"}
            ring/ring-defaults        {:mvn/version "0.3.2"}
            ovotech/ring-jwt          {:mvn/version "1.2.0"}
+           mount                     {:mvn/version "0.1.16"}
+           http-kit                  {:mvn/version "2.4.0-alpha4"}
+           seancorfield/next.jdbc    {:mvn/version "1.0.12"}
+           honeysql                  {:mvn/version "0.9.8"}
+           nilenso/honeysql-postgres {:mvn/version "0.2.6"}
+           org.postgresql/postgresql {:mvn/version "42.2.9"}
+           hikari-cp                 {:mvn/version "2.10.0"}
            com.taoensso/timbre       {:mvn/version "4.10.0"}
            org.clojure/clojurescript {:mvn/version "1.10.597"}}
  :aliases {:dev {:extra-paths ["dev"]
                  :jvm-opts    ["-Dtrace"]
-                 :extra-deps  {mount                               {:mvn/version "0.1.16"}
-                               http-kit                            {:mvn/version "2.4.0-alpha4"}
-                               org.clojure/tools.namespace         {:mvn/version "0.3.1"}
+                 :extra-deps  {org.clojure/tools.namespace         {:mvn/version "0.3.1"}
                                thheller/shadow-cljs                {:mvn/version "2.8.83"}
                                com.fulcrologic/semantic-ui-wrapper {:mvn/version "1.0.0"}
                                clj-commons/pushy                   {:mvn/version "0.3.10"}

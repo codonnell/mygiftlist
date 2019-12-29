@@ -1,41 +1,13 @@
 (ns user
   (:require
+   ;; TODO: Include namespaces with mount components to properly start system
    [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
    [expound.alpha :as expound]
    [clojure.spec.alpha :as s]
    [mount.core :as mount]
-   [rocks.mygiftlist.server-components.middleware :as middleware]
-   [rocks.mygiftlist.config :as config]
    [mount.core :refer [defstate]]
    [clojure.pprint :refer [pprint]]
-   [org.httpkit.server :as http-kit]
-   [ring.util.response :as resp]
-   [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
    [taoensso.timbre :as log]))
-
-;; ==================== CONFIG ====================
-
-(alter-var-root #'config/environment (constantly :dev))
-
-(defmethod config/get-config :dev [_]
-  {:db-name "my-db"
-   :jwk-endpoint "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"})
-
-;; ==================== SERVER ====================
-
-(defn not-found-handler [req]
-  (assoc-in (resp/resource-response "public/index.html")
-    [:headers "Content-Type"] "text/html"))
-
-(def middleware
-  (-> not-found-handler
-    middleware/api-middleware
-    (wrap-defaults (assoc api-defaults :static {:resources "public"}))))
-
-(defstate http-server
-  :start
-  (http-kit/run-server middleware {:port 8080})
-  :stop (http-server))
 
 ;; ==================== REPL TOOLING ====================
 

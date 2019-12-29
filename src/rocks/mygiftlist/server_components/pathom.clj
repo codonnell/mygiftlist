@@ -5,12 +5,11 @@
    [com.wsscode.pathom.core :as p]
    [com.wsscode.common.async-clj :refer [let-chan]]
    [clojure.core.async :as async]
-   [rocks.mygiftlist.ion :as ion]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
-   [rocks.mygiftlist.model.user :as model.user]
-   [rocks.mygiftlist.model.gift :as model.gift]
+   #_[rocks.mygiftlist.model.user :as model.user]
+   #_[rocks.mygiftlist.model.gift :as model.gift]
    [rocks.mygiftlist.model.gift-list :as model.gift-list]))
 
 (pc/defresolver index-explorer [env _]
@@ -22,8 +21,8 @@
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
 (def all-resolvers [index-explorer
-                    model.user/user-resolvers
-                    model.gift/gift-resolvers
+                    ;; model.user/user-resolvers
+                    ;; model.gift/gift-resolvers
                     model.gift-list/gift-list-resolvers])
 
 (defn preprocess-parser-plugin
@@ -54,8 +53,6 @@
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.
                                                          (assoc env
-                                                           :db (ion/get-db)
-                                                           :connection (ion/get-connection)
                                                            :requester-auth0-id (get-in env [:ring/request :claims :sub]))))
                                     (preprocess-parser-plugin log-requests)
                                     p/error-handler-plugin
@@ -71,9 +68,12 @@
                                     tx))))))
 
 (comment
-  (parser {:ring/request {:claims {:sub "auth0|5dc81bfc1658c30e5fe9b877"}}}
+  (parser {:ring/request {:claims {:sub "auth0|abc123" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
+    [{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
+      [::gift-list/name ::gift-list/created-at ::gift-list/created-by-id
+       {::gift-list/gifts [::gift/id]}]}]
     #_[{:created-gift-lists [::gift-list/id ::gift-list/name]}]
-    [{[:component/id :left-nav]
+    #_[{[:component/id :left-nav]
       [{:created-gift-lists [::gift-list/id ::gift-list/name]}
        {:invited-gift-lists
         [::gift-list/id ::gift-list/name

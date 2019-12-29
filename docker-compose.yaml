@@ -1,9 +1,10 @@
 version: "3.7"
 services:
-  nginx:
-    image: nginx:1.17.6-alpine
+  postgres:
+    image: postgres:11.6-alpine
     ports:
-      - "3001:3001"
+      - "15432:5432"
     volumes:
-      - ./default.conf:/etc/nginx/conf.d/default.conf
-      - ./resources/public:/var/www/html
+      - db_data:/var/lib/postgresql/data
+volumes:
+  db_data:
