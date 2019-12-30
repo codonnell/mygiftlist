@@ -3,6 +3,7 @@
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
    [next.jdbc :as jdbc]
    [honeysql.core :as sql]
+   [honeysql.helpers :as sqlh]
    [rocks.mygiftlist.server-components.db :as db]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
@@ -11,7 +12,18 @@
    [rocks.mygiftlist.type.gift-list.revocation :as revocation]
    [taoensso.timbre :as log]))
 
-;; TODO: Add permissions
+(defn with-gift-list-access-control
+  "Given a query selecting gift list data with gift list aliased as gl, updates
+  the query so that only gift lists the requester has access to are returned.
+
+  In particular, users should only be able to access gift lists they have either
+  created or accepted invitations to (and not had that invitation revoked)."
+  [requester-auth0-id query]
+  (sqlh/merge-join query
+    [:gift_list_access :perm_gla] [:and
+                                   [:= :perm_gla.auth0_id requester-auth0-id]
+                                   [:= :perm_gla.gift_list_id :gl.id]]))
+
 (defresolver gift-list-by-id-resolver [{::db/keys [pool] :keys [requester-auth0-id]} inputs]
   {::pc/input #{::gift-list/id}
    ::pc/output [::gift-list/name ::gift-list/created-at
@@ -20,13 +32,14 @@
    ::pc/transform pc/transform-batch-resolver}
   (let [ids (mapv ::gift-list/id inputs)
         raw-results (db/execute! pool
-                      {:select [:gl.id :gl.name :gl.created_at :u.id
-                                [(sql/call :array_agg :g.id) :gift_ids]]
-                       :from [[:gift_list :gl]]
-                       :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
-                                   [:user :u] [:= :u.id :gl.created_by_id]]
-                       :where [:in :gl.id ids]
-                       :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id :u.id]})
+                      (with-gift-list-access-control requester-auth0-id
+                        {:select [:gl.id :gl.name :gl.created_at :u.id
+                                  [(sql/call :array_agg :g.id) :gift_ids]]
+                         :from [[:gift_list :gl]]
+                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
+                                     [:user :u] [:= :u.id :gl.created_by_id]]
+                         :where [:in :gl.id ids]
+                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id :u.id]}))
         results (mapv (fn [{:keys [gift-ids] :as gift-list}]
                         (-> gift-list
                           (assoc ::gift-list/gifts
@@ -57,7 +70,12 @@
       :join [[:invitation :i] [:= :i.gift_list_id :gl.id]
              [:invitation_acceptance :ia] [:= :ia.invitation_id :i.id]
              [:user :u] [:= :u.id :ia.accepted_by_id]]
-      :where [:= :u.auth0_id requester-auth0-id]})})
+      :left-join [[:revocation :r] [:and
+                                    [:= :r.revoked_user_id :u.id]
+                                    [:= :r.gift_list_id :gl.id]]]
+      :where [:and
+              [:= :u.auth0_id requester-auth0-id]
+              [:= :r.id nil]]})})
 
 ;; (defresolver invited-gift-lists-resolver [{:keys [db requester-auth0-id]} _]
 ;;   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
