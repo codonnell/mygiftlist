@@ -12,7 +12,6 @@
    [taoensso.timbre :as log]))
 
 ;; TODO: Add permissions
-;; TODO: Make sure pool env putter-inner works
 (defresolver gift-list-by-id-resolver [{::db/keys [pool] :keys [requester-auth0-id]} inputs]
   {::pc/input #{::gift-list/id}
    ::pc/output [::gift-list/name ::gift-list/created-at
@@ -20,7 +19,7 @@
                 {::gift-list/gifts [::gift/id]}]
    ::pc/transform pc/transform-batch-resolver}
   (let [ids (mapv ::gift-list/id inputs)
-        raw-results (db/execute! db/pool
+        raw-results (db/execute! pool
                       {:select [:gl.id :gl.name :gl.created_at :u.id
                                 [(sql/call :array_agg :g.id) :gift_ids]]
                        :from [[:gift_list :gl]]
@@ -41,7 +40,7 @@
 (defresolver created-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:created-gift-lists [::gift-list/id]}]}
   {:created-gift-lists
-   (db/execute! db/pool
+   (db/execute! pool
      {:select [:gl.id]
       :modifiers [:distinct]
       :from [[:gift_list :gl]]
@@ -51,7 +50,7 @@
 (defresolver invited-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
   {:invited-gift-lists
-   (db/execute! db/pool
+   (db/execute! pool
      {:select [:gl.id]
       :modifiers [:distinct]
       :from [[:gift_list :gl]]

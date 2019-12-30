@@ -1,6 +1,7 @@
 (ns rocks.mygiftlist.server-components.pathom
   (:require
    [taoensso.timbre :as log]
+   [mount.core :refer [defstate]]
    [com.wsscode.pathom.connect :as pc]
    [com.wsscode.pathom.core :as p]
    [com.wsscode.common.async-clj :refer [let-chan]]
@@ -10,7 +11,8 @@
    [rocks.mygiftlist.type.gift-list :as gift-list]
    #_[rocks.mygiftlist.model.user :as model.user]
    #_[rocks.mygiftlist.model.gift :as model.gift]
-   [rocks.mygiftlist.model.gift-list :as model.gift-list]))
+   [rocks.mygiftlist.model.gift-list :as model.gift-list]
+   [rocks.mygiftlist.server-components.db :as db]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -42,7 +44,8 @@
   (log/debug "Pathom transaction:" (pr-str tx))
   req)
 
-(def parser
+(defstate parser
+  :start
   (let [real-parser (p/parallel-parser
                       {::p/mutate  pc/mutate-async
                        ::p/env     {::p/reader               [p/map-reader pc/parallel-reader
@@ -53,7 +56,8 @@
                                                          ;; Here is where you can dynamically add things to the resolver/mutation
                                                          ;; environment, like the server config, database connections, etc.
                                                          (assoc env
-                                                           :requester-auth0-id (get-in env [:ring/request :claims :sub]))))
+                                                           :requester-auth0-id (get-in env [:ring/request :claims :sub])
+                                                           ::db/pool db/pool)))
                                     (preprocess-parser-plugin log-requests)
                                     p/error-handler-plugin
                                     p/request-cache-plugin
@@ -69,11 +73,12 @@
 
 (comment
   (parser {:ring/request {:claims {:sub "auth0|abc123" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
-    [{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
+    #_[{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
       [::gift-list/name ::gift-list/created-at
        {::gift-list/created-by [::user/id]}
        {::gift-list/gifts [::gift/id]}]}]
-    #_[{:created-gift-lists [::gift-list/id ::gift-list/name]}]
+    [{:created-gift-lists [::gift-list/id ::gift-list/name]}
+     {:invited-gift-lists [::gift-list/id ::gift-list/name]}]
     #_[{[:component/id :left-nav]
       [{:created-gift-lists [::gift-list/id ::gift-list/name]}
        {:invited-gift-lists
