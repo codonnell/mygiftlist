@@ -9,8 +9,8 @@
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
-   #_[rocks.mygiftlist.model.user :as model.user]
-   #_[rocks.mygiftlist.model.gift :as model.gift]
+   [rocks.mygiftlist.model.user :as model.user]
+   [rocks.mygiftlist.model.gift :as model.gift]
    [rocks.mygiftlist.model.gift-list :as model.gift-list]
    [rocks.mygiftlist.server-components.db :as db]))
 
@@ -23,8 +23,8 @@
      (update ::pc/index-mutations #(into {} (map (fn [[k v]] [k (dissoc v ::pc/mutate)])) %)))})
 
 (def all-resolvers [index-explorer
-                    ;; model.user/user-resolvers
-                    ;; model.gift/gift-resolvers
+                    model.user/user-resolvers
+                    model.gift/gift-resolvers
                     model.gift-list/gift-list-resolvers])
 
 (defn preprocess-parser-plugin
@@ -72,12 +72,13 @@
                                     tx))))))
 
 (comment
-  (parser {:ring/request {:claims {:sub "auth0|abc123" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
+  (parser {:ring/request {:claims {:sub "auth0|abcd1234" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
     #_[{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
       [::gift-list/name ::gift-list/created-at
        {::gift-list/created-by [::user/id]}
        {::gift-list/gifts [::gift/id]}]}]
-    [{:created-gift-lists [::gift-list/id ::gift-list/name]}
+    #_[{:created-gift-lists [::gift-list/id ::gift-list/name
+                           {::gift-list/gifts [::gift/id ::gift/name ::gift/description]}]}
      {:invited-gift-lists [::gift-list/id ::gift-list/name]}]
     #_[{[:component/id :left-nav]
       [{:created-gift-lists [::gift-list/id ::gift-list/name]}
@@ -85,8 +86,12 @@
         [::gift-list/id ::gift-list/name
          {::gift-list/created-by
           [::user/id ::user/given-name ::user/family-name ::user/email]}]}]}]
+    [{[::user/auth0-id "auth0|abcd1234"]
+      [::user/id ::user/given-name ::user/email]}]
     #_[{:created-gift-lists
-      [::gift-list/id ::gift-list/name]}
+      [::gift-list/id ::gift-list/name
+       {::gift-list/created-by
+        [::user/id ::user/given-name ::user/family-name ::user/email]}]}
      {:invited-gift-lists
       [::gift-list/id ::gift-list/name
        {::gift-list/created-by
@@ -94,13 +99,5 @@
     #_[{[::gift-list/id #uuid "0ebaf3ee-7d0d-4573-880a-ad2cb8582ec7"]
       [::gift-list/id ::gift-list/name ::gift-list/created-at
        {::gift-list/gifts
-        [::gift/id ::gift/name ::gift/description]}]}]
-    #_[{:all-users [::user/id ::user/auth0-id ::user/email ::user/created-at ::user/given-name ::user/family-name
-                  {::user/created-gift-lists
-                   [::gift-list/id ::gift-list/name ::gift-list/created-at
-                    {::gift-list/gifts
-                     [::gift/id ::gift/name ::gift/description]}]}]}]
-    #_[{:all-users [::user/id ::user/auth0-id ::user/email ::user/given-name ::user/family-name
-                  {::user/requested-gifts
-                   [::gift/id ::gift/name ::gift/description]}]}])
+        [::gift/id ::gift/name ::gift/description]}]}])
   )

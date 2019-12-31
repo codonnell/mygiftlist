@@ -5,7 +5,8 @@
             [next.jdbc.result-set :as result-set]
             [next.jdbc.prepare :as p]
             [clojure.string :as str]
-            [honeysql.core :as sql]))
+            [honeysql.core :as sql]
+            [honeysql.format :as sqlf]))
 
 ;; TODO: Parameterize db options
 ;; TODO: Look into `:reWriteBatchedInserts`
@@ -85,6 +86,10 @@
   java.time.LocalDate
   (set-parameter [^java.time.LocalDate v ^java.sql.PreparedStatement ps ^long i]
     (.setTimestamp ps i (java.sql.Timestamp/valueOf (.atStartOfDay v)))))
+
+(defmethod sqlf/fn-handler "array_agg_distinct"
+  [_ a]
+  (format "array_agg(DISTINCT %s)" (sqlf/to-sql a)))
 
 (comment
   (mount.core/start)
