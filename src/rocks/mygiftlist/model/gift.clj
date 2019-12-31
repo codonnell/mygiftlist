@@ -28,22 +28,19 @@
                 {::gift/claimed-by [::user/id]} ::gift/claimed-at
                 {::gift/requested-by [::user/id]} ::gift/requested-at]
    ::pc/transform pc/transform-batch-resolver}
-  (let [ids (mapv ::gift/id inputs)
-        raw-results (db/execute! pool
-                      (with-gift-access-control requester-auth0-id
-                        {:select [:g.id :g.name :g.description :g.url
-                                  :g.requested_by_id :g.requested_at
-                                  :g.claimed_by_id :g.claimed_at
-                                  :g.gift_list_id]
-                         :from [[:gift :g]]
-                         :where [:in :g.id ids]}))
-        results (mapv (fn [{::gift/keys [requested-by-id claimed-by-id gift-list-id] :as gift}]
-                        (-> gift
-                          (assoc-in [::gift/requested-by ::user/id] requested-by-id)
-                          (assoc-in [::gift/claimed-by ::user/id] claimed-by-id)
-                          (assoc-in [::gift/gift-list ::gift-list/id] gift-list-id)
-                          (dissoc ::gift/requested-by-id ::gift/claimed-by-id ::gift/gift-list-id)))
-                  raw-results)]
-    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id} results)))
+  (->> {:select [:g.id :g.name :g.description :g.url
+                 :g.requested_by_id :g.requested_at
+                 :g.claimed_by_id :g.claimed_at
+                 :g.gift_list_id]
+        :from [[:gift :g]]
+        :where [:in :g.id (mapv ::gift/id inputs)]}
+    (with-gift-access-control requester-auth0-id)
+    (mapv (fn [{::gift/keys [requested-by-id claimed-by-id gift-list-id] :as gift}]
+            (-> gift
+              (assoc-in [::gift/requested-by ::user/id] requested-by-id)
+              (assoc-in [::gift/claimed-by ::user/id] claimed-by-id)
+              (assoc-in [::gift/gift-list ::gift-list/id] gift-list-id)
+              (dissoc ::gift/requested-by-id ::gift/claimed-by-id ::gift/gift-list-id))))
+    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id})))
 
 (def gift-resolvers [gift-by-id-resolver])

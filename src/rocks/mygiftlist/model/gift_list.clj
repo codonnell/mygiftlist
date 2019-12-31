@@ -30,25 +30,22 @@
                 {::gift-list/created-by [::user/id]}
                 {::gift-list/gifts [::gift/id]}]
    ::pc/transform pc/transform-batch-resolver}
-  (let [ids (mapv ::gift-list/id inputs)
-        raw-results (db/execute! pool
-                      (with-gift-list-access-control requester-auth0-id
-                        {:select [:gl.id :gl.name :gl.created_at :u.id
-                                  [(sql/call :array_agg :g.id) :gift_ids]]
-                         :from [[:gift_list :gl]]
-                         :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
-                                     [:user :u] [:= :u.id :gl.created_by_id]]
-                         :where [:in :gl.id ids]
-                         :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id :u.id]}))
-        results (mapv (fn [{:keys [gift-ids] :as gift-list}]
-                        (-> gift-list
-                          (assoc ::gift-list/gifts
-                            (mapv #(hash-map ::gift/id %) gift-ids))
-                          (assoc-in [::gift-list/created-by ::user/id]
-                            (::user/id gift-list))
-                          (dissoc :gift-ids ::user/id)))
-                  raw-results)]
-    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id} results)))
+  (->> {:select [:gl.id :gl.name :gl.created_at :u.id
+                 [(sql/call :array_agg :g.id) :gift_ids]]
+        :modifiers [:distinct]
+        :from [[:gift_list :gl]]
+        :left-join [[:gift :g] [:= :g.gift_list_id :gl.id]
+                    [:user :u] [:= :u.id :gl.created_by_id]]
+        :where [:in :gl.id (mapv ::gift-list/id inputs)]
+        :group-by [:gl.id :gl.name :gl.created_at :gl.created_by_id :u.id]}
+    (with-gift-list-access-control requester-auth0-id)
+    (db/execute! pool)
+    (mapv (fn [{:keys [gift-ids] :as gift-list}]
+            (-> gift-list
+              (assoc ::gift-list/gifts (mapv #(hash-map ::gift/id %) gift-ids))
+              (assoc-in [::gift-list/created-by ::user/id] (::user/id gift-list))
+              (dissoc :gift-ids ::user/id))))
+    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id})))
 
 (defresolver created-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:created-gift-lists [::gift-list/id]}]}
