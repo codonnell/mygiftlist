@@ -1,37 +1,49 @@
 (ns rocks.mygiftlist.model.gift
   (:require
-   [datomic.client.api :as d]
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
-   [rocks.mygiftlist.ion.query :as query]
+   [honeysql.helpers :as sqlh]
+   [rocks.mygiftlist.server-components.db :as db]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
    [rocks.mygiftlist.type.gift-list.revocation :as revocation]))
 
-(defresolver gift-by-id-resolver [{:keys [db requester-auth0-id]} inputs]
+(defn with-gift-access-control
+  "Given a query selecting gift data with gift aliased as g, updates the query so
+  that only gifts the requester has access to are returned.
+
+  In particular, users should only be able to access gifts belonging to gift
+  lists they have either created or accepted invitations to (and not had that
+  invitation revoked)."
+  [requester-auth0-id query]
+  (sqlh/merge-join query
+    [:gift_list_access :perm_gla] [:and
+                                   [:= :perm_gla.auth0_id requester-auth0-id]
+                                   [:= :perm_gla.gift_list_id :g.gift_list_id]]))
+
+(defresolver gift-by-id-resolver [{::db/keys [pool] :keys [requester-auth0-id]} inputs]
   {::pc/input #{::gift/id}
    ::pc/output [::gift/name ::gift/description ::gift/url
                 {::gift/claimed-by [::user/id]} ::gift/claimed-at
                 {::gift/requested-by [::user/id]} ::gift/requested-at]
    ::pc/transform pc/transform-batch-resolver}
-  (query/batch-query-by ::gift/id
-    (d/q '{:find [(pull ?gift [::gift/id ::gift/name ::gift/description ::gift/url
-                               {::gift/claimed-by [::user/id]} ::gift/claimed-at
-                               {::gift/requested-by [::user/id]} ::gift/requested-at])]
-           :in [$ ?requester-auth0-id [?id ...]]
-           :where [[?requester ::user/auth0-id ?requester-auth0-id]
-                   [?gift ::gift/id ?id]
-                   [?gift-list ::gift-list/gifts ?gift]
-                   (or-join [?gift-list ?requester]
-                     [?requester ::gift/requested-by ?requester]
-                     (and
-                       [?invitation ::invitation/gift-list ?gift-list]
-                       [?invitation ::invitation/accepted-by ?requester]
-                       (not-join [?gift-list]
-                         [?revocation ::revocation/gift-list ?gift-list]
-                         [?revocation ::revocation/user ?requester])))]}
-      db requester-auth0-id)
-    inputs))
+  (let [ids (mapv ::gift/id inputs)
+        raw-results (db/execute! pool
+                      (with-gift-access-control requester-auth0-id
+                        {:select [:g.id :g.name :g.description :g.url
+                                  :g.requested_by_id :g.requested_at
+                                  :g.claimed_by_id :g.claimed_at
+                                  :g.gift_list_id]
+                         :from [[:gift :g]]
+                         :where [:in :g.id ids]}))
+        results (mapv (fn [{::gift/keys [requested-by-id claimed-by-id gift-list-id] :as gift}]
+                        (-> gift
+                          (assoc-in [::gift/requested-by ::user/id] requested-by-id)
+                          (assoc-in [::gift/claimed-by ::user/id] claimed-by-id)
+                          (assoc-in [::gift/gift-list ::gift-list/id] gift-list-id)
+                          (dissoc ::gift/requested-by-id ::gift/claimed-by-id ::gift/gift-list-id)))
+                  raw-results)]
+    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id} results)))
 
 (def gift-resolvers [gift-by-id-resolver])
