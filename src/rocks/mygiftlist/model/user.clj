@@ -10,7 +10,6 @@
    [honeysql.core :as sql]
    [honeysql.helpers :as sqlh]))
 
-;; TODO: Test join resolver
 (defn with-user-access-control
   "Given a query selecting user aliased as u, updates the query so that only
   user data the requester has access to are returned.

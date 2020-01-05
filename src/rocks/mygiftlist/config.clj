@@ -1,25 +1,14 @@
 (ns rocks.mygiftlist.config
-  (:require [datomic.ion :as ion]
-            [rocks.mygiftlist.ion.edn :as edn]))
+  (:require [clojure.java.io :as io]
+            [aero.core :as aero]))
 
-(def environment
-  "The environment this configuration is for. Gets overwritten for local development."
-  :prod)
+(def ^:private config (aero/read-config (io/resource "config.edn")))
 
-(defmulti get-config (fn [env] env))
+(def database-url (:database-url config))
 
-(defn get-ion-params []
-  (->> {:path "/datomic-shared/prod/mygiftlistrocks/"}
-    ion/get-params
-    (into {} (map (fn [[k v]] [(keyword k) v])))))
+(def jwk-endpoint (:jwk-endpoint config))
 
-(defmethod get-config :prod [_]
-  (get-ion-params))
-
-(defn config-lambda
-  "Lambda ion that returns the production config"
-  [_]
-  (edn/write-str (get-ion-params)))
+(def port (:port config))
 
 (comment
   )

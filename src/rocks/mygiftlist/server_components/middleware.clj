@@ -6,9 +6,11 @@
             [com.fulcrologic.fulcro.server.api-middleware :refer [handle-api-request
                                                                   wrap-transit-params
                                                                   wrap-transit-response]]
+            [ring.util.response :as resp]
+            [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.jwt :as jwt]))
 
-(defn not-found-handler [req]
+(defn not-found-handler [_]
   (assoc-in (resp/resource-response "public/index.html")
     [:headers "Content-Type"] "text/html"))
 
@@ -26,7 +28,7 @@
   (-> not-found-handler
     (wrap-api "/api" db/pool)
     (jwt/wrap-jwt {:alg          :RS256
-                   :jwk-endpoint (:jwk-endpoint (config/get-config config/environment))})
+                   :jwk-endpoint config/jwk-endpoint})
     wrap-transit-params
     wrap-transit-response
     (wrap-defaults (assoc api-defaults :static {:resources "public"}))))

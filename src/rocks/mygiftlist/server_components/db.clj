@@ -1,5 +1,6 @@
 (ns rocks.mygiftlist.server-components.db
-  (:require [mount.core :refer [defstate]]
+  (:require [rocks.mygiftlist.config :as config]
+            [mount.core :refer [defstate]]
             [hikari-cp.core :as pool]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as result-set]
@@ -8,25 +9,28 @@
             [honeysql.core :as sql]
             [honeysql.format :as sqlf]))
 
-;; TODO: Parameterize db options
+(defn parse-url
+  "Ghetto database-url parser to use until issue with CIDER and java.net.URI is
+  worked out."
+  [database-url]
+  (zipmap
+    [:username :password :server-name :port-number :database-name]
+    (drop 2 (re-find #"postgres(ql)?://(.+):(.*)@(.+):(\d+)/(.+)" database-url))))
+
 ;; TODO: Look into `:reWriteBatchedInserts`
 (def datasource-options
-  {:auto-commit        true
-   :read-only          false
-   :connection-timeout 30000
-   :validation-timeout 5000
-   :idle-timeout       600000
-   :max-lifetime       1800000
-   :minimum-idle       10
-   :maximum-pool-size  10
-   :pool-name          "db-pool"
-   :adapter            "postgresql"
-   :username           "postgres"
-   :password           ""
-   :database-name      "postgres"
-   :server-name        "localhost"
-   :port-number        15432
-   :register-mbeans    false})
+  (merge {:auto-commit        true
+          :read-only          false
+          :connection-timeout 30000
+          :validation-timeout 5000
+          :idle-timeout       600000
+          :max-lifetime       1800000
+          :minimum-idle       10
+          :maximum-pool-size  10
+          :pool-name          "db-pool"
+          :adapter            "postgresql"
+          :register-mbeans    false}
+    (parse-url config/database-url)))
 
 (defstate pool
   :start (pool/make-datasource datasource-options)
@@ -95,4 +99,8 @@
   (mount.core/start)
   (jdbc/execute! pool ["select * from \"user\""] {:builder-fn as-qualified-kebab-maps})
   (mount.core/stop)
+  (parse-url  "postgresql://postgres:@localhost:15432/postgres")
+  (zipmap
+    [:username :password :server-name :port-number :database-name]
+    (drop 1 (re-find #"postgresql://(.+):(.*)@(.+):(\d+)/(.+)" "postgresql://postgres:@localhost:15432/postgres")))
   )

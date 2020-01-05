@@ -1,0 +1,3 @@
+{:database-url #or [#env DATABASE_URL "postgresql://postgres:@localhost:15432/postgres"]
+ :jwk-endpoint #or [#env JWK_ENDPOINT "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"]
+ :port #or [#env PORT 8080]}
