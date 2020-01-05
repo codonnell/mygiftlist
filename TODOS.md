@@ -1,4 +1,6 @@
 - [x] Server-side configuration
-- [ ] All entity resolvers
+- [x] All entity resolvers
+- [ ] Deploy to heroku free tier
+- [ ] Upsert user on login
 - [ ] Mutations
 - [ ] Remote loads via routing layer

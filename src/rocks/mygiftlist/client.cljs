@@ -26,7 +26,7 @@
       (<! (auth/handle-redirect-callback)))
     (if-let [authenticated (<! (auth/is-authenticated?))]
       (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
-        (comp/transact! SPA [(auth/set-current-user #::user {:id sub :email email})
+        (comp/transact! SPA [(auth/set-current-user {::user/id sub ::user/email email})
                              (routing/route-to {:route-string "/home"})])
         (df/load! SPA [:component/id :left-nav] ui.nav/LeftNav))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})]))))

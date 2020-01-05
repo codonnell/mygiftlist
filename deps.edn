@@ -25,4 +25,9 @@
                                com.cognitect/transit-cljs          {:mvn/version "0.8.256"}
                                fulcrologic/fulcro-inspect          {:mvn/version "2.2.5"}
                                binaryage/devtools                  {:mvn/version "0.9.10"}
-                               expound                             {:mvn/version "0.8.2"}}}}}
+                               expound                             {:mvn/version "0.8.2"}}}
+           :depstar
+           {:extra-deps
+            {seancorfield/depstar {:mvn/version "0.5.1"}}}
+           :uberjar
+           {:main-opts ["-m" "hf.depstar.uberjar" "target/mygiftlistrocks.jar"]}}}

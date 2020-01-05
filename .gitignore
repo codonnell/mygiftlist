@@ -4,3 +4,4 @@ node_modules
 .shadow-cljs
 .nrepl-port
 .datomic-ions
+target
