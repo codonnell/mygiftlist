@@ -35,6 +35,7 @@
         :from [[:gift :g]]
         :where [:in :g.id (mapv ::gift/id inputs)]}
     (with-gift-access-control requester-auth0-id)
+    (db/execute! pool)
     (mapv (fn [{::gift/keys [requested-by-id claimed-by-id gift-list-id] :as gift}]
             (-> gift
               (assoc-in [::gift/requested-by ::user/id] requested-by-id)

@@ -78,6 +78,7 @@
        {::gift-list/created-by [::user/id]}
        {::gift-list/gifts [::gift/id]}]}]
     #_[{:created-gift-lists [::gift-list/id ::gift-list/name
+                           {::gift-list/created-by [::user/id ::user/auth0-id]}
                            {::gift-list/gifts [::gift/id ::gift/name ::gift/description]}]}
      {:invited-gift-lists [::gift-list/id ::gift-list/name]}]
     #_[{[:component/id :left-nav]
@@ -87,7 +88,8 @@
          {::gift-list/created-by
           [::user/id ::user/given-name ::user/family-name ::user/email]}]}]}]
     [{[::user/auth0-id "auth0|abcd1234"]
-      [::user/id ::user/given-name ::user/email]}]
+      [::user/id ::user/given-name ::user/email
+       {::user/created-gift-lists [::gift-list/id ::gift-list/name]}]}]
     #_[{:created-gift-lists
       [::gift-list/id ::gift-list/name
        {::gift-list/created-by

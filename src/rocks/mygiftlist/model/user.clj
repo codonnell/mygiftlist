@@ -128,7 +128,7 @@
                           [:invitation_acceptance :ia] [:= :ia.accepted_by_id :u.id]
                           [:invitation :accepted_invitation] [:= :accepted_invitation.id :ia.invitation_id]
                           [:invitation :created_invitation] [:= :created_invitation.created_by_id :u.id]
-                          [:revocation :r] [:= :r.revoked_user_id]
+                          [:revocation :r] [:= :r.revoked_user_id :u.id]
                           [:revocation :created_revocation] [:= :created_revocation.created_by_id :u.id]]
               :where [:and
                       [:= :u.id id]
@@ -152,4 +152,28 @@
    user-join-resolver])
 
 (comment
+  (sql/format
+    {:select [[(sql/call :array_agg_distinct :requested_gift.id) :requested_gift_ids]
+              [(sql/call :array_agg_distinct :claimed_gift.id) :claimed_gift_ids]
+              [(sql/call :array_agg_distinct :created_gift_list.id) :created_gift_list_ids]
+              [(sql/call :array_agg_distinct :accepted_invitation.id) :accepted_invitation_ids]
+              [(sql/call :array_agg_distinct :created_invitation.id) :created_invitation_ids]
+              [(sql/call :array_agg_distinct :r.id) :revocation_ids]
+              [(sql/call :array_agg_distinct :created_revocation.id) :created_revocation_ids]]
+     :from [[:user :u]]
+     :left-join [
+                 [:gift :requested_gift] [:= :requested_gift.requested_by_id :u.id]
+                 [:gift :claimed_gift] [:= :claimed_gift.claimed_by_id :u.id]
+                 [:gift_list :created_gift_list] [:= :created_gift_list.created_by_id :u.id]
+                 [:invitation_acceptance :ia] [:= :ia.accepted_by_id :u.id]
+                 [:invitation :accepted_invitation] [:= :accepted_invitation.id :ia.invitation_id]
+                 [:invitation :created_invitation] [:= :created_invitation.created_by_id :u.id]
+                 [:revocation :r] [:= :r.revoked_user_id :u.id]
+                 [:revocation :created_revocation] [:= :created_revocation.created_by_id :u.id]
+                 ]
+     :where [:and
+             [:= :u.id "abc"]
+             [:= :u.auth0_id "abc123"]]
+     :group-by [:u.id]}
+    :quoting :ansi)
   )
