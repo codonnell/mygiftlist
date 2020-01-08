@@ -9,14 +9,6 @@
             [honeysql.core :as sql]
             [honeysql.format :as sqlf]))
 
-(defn parse-url
-  "Ghetto database-url parser to use until issue with CIDER and java.net.URI is
-  worked out."
-  [database-url]
-  (zipmap
-    [:username :password :server-name :port-number :database-name]
-    (drop 2 (re-find #"postgres(ql)?://(.+):(.*)@(.+):(\d+)/(.+)" database-url))))
-
 ;; TODO: Look into `:reWriteBatchedInserts`
 (def datasource-options
   (merge {:auto-commit        true
@@ -30,7 +22,7 @@
           :pool-name          "db-pool"
           :adapter            "postgresql"
           :register-mbeans    false}
-    (parse-url config/database-url)))
+    config/database-spec))
 
 (defstate pool
   :start (pool/make-datasource datasource-options)

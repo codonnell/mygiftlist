@@ -1,3 +1,7 @@
-{:database-url #or [#env DATABASE_URL "postgresql://postgres:@localhost:15432/postgres"]
+{:database-spec {:username #or [#docker-secret #env POSTGRES_USER_FILE "postgres"]
+                 :password #or [#docker-secret #env POSTGRES_PASSWORD_FILE ""]
+                 :server-name #or [#env POSTGRES_HOSTNAME "postgres"]
+                 :port-number #long #or [#env POSTGRES_PORT 5432]
+                 :database-name #or [#env POSTGRES_DB "postgres"]}
  :jwk-endpoint #or [#env JWK_ENDPOINT "https://mygiftlistrocks-dev.auth0.com/.well-known/jwks.json"]
  :port #long #or [#env PORT 8080]}
