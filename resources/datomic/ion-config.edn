@@ -1,7 +1,0 @@
-{:lambdas {:api-lambda-proxy
-           {:fn rocks.mygiftlist.ion.http/api-lambda-proxy
-            :description "Lambda proxy integration entry point"}
-           :config-lambda
-           {:fn rocks.mygiftlist.config/config-lambda
-            :description "Lambda that prints the application config"}}
- :app-name "mygiftlistrocks"}
