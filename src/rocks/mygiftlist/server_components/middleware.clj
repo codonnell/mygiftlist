@@ -8,7 +8,8 @@
                                                                   wrap-transit-response]]
             [ring.util.response :as resp]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
-            [ring.middleware.jwt :as jwt]))
+            [ring.middleware.jwt :as jwt]
+            [ring.middleware.gzip :as gzip]))
 
 (defn not-found-handler [_]
   (assoc-in (resp/resource-response "public/index.html")
@@ -31,4 +32,5 @@
                    :jwk-endpoint config/jwk-endpoint})
     wrap-transit-params
     wrap-transit-response
-    (wrap-defaults (assoc api-defaults :static {:resources "public"}))))
+    (wrap-defaults (assoc api-defaults :static {:resources "public"}))
+    gzip/wrap-gzip))
