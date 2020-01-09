@@ -20,6 +20,8 @@ services:
     networks:
       - traefik-public
       - backend-private
+    depends_on:
+      - postgres
     environment:
       JWK_ENDPOINT: "https://mygiftlistrocks.auth0.com/.well-known/jwks.json"
       PORT: "8080"

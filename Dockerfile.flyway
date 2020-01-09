@@ -1,0 +1,7 @@
+FROM flyway/flyway:6.1.4-alpine
+
+COPY migrations /flyway/sql
+
+ENTRYPOINT ["/bin/sh"]
+
+CMD ["-c", "/flyway/flyway -url=jdbc:postgresql://${POSTGRES_HOSTNAME}:${POSTGRES_PORT}/${POSTGRES_DB} -user=$(cat /run/secrets/db_user) -password=$(cat /run/secrets/db_password) -connectRetries=60 migrate"]
