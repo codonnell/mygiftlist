@@ -143,12 +143,29 @@
      ::user/revocations (mapv #(hash-map ::revocation/id %) revocation-ids)
      ::user/created-revocations (mapv #(hash-map ::revocation/id %) created-revocation-ids)}))
 
+(defmutation upsert-user-on-auth0-id [{::db/keys [pool] :keys [requester-auth0-id] :as env} {::user/keys [auth0-id email]}]
+  {::pc/params #{::user/id ::user/email}
+   ::pc/output [::user/id]}
+  (println {:requester-auth0-id requester-auth0-id
+            :auth0-id auth0-id
+            :email email})
+  (when (= requester-auth0-id auth0-id)
+    (db/execute-one! pool
+      {:insert-into :user
+       :values [{:auth0_id auth0-id
+                 :email email}]
+       :upsert {:on-conflict [:auth0_id]
+                :do-update-set [:email]}
+       :returning [:id]})))
+
 (def user-resolvers
   [user-by-id-resolver
    user-by-auth0-id-resolver
    user-by-email-resolver
    user-name-resolver
-   user-join-resolver])
+   user-join-resolver
+
+   upsert-user-on-auth0-id])
 
 (comment
   (sql/format

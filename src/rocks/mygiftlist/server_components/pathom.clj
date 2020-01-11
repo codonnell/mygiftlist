@@ -72,7 +72,11 @@
                                     tx))))))
 
 (comment
+  (mount.core/start)
   (parser {:ring/request {:claims {:sub "auth0|abcd1234" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
+    `[{(model.user/upsert-user-on-auth0-id #::user {:auth0-id "auth0|abcd1234"
+                                                    :email "fake2@example.com"})
+       [::user/id ::user/email ::user/auth0-id ::user/given-name ::user/family-name]}]
     #_[{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
       [::gift-list/name ::gift-list/created-at
        {::gift-list/created-by [::user/id]}
@@ -87,7 +91,7 @@
         [::gift-list/id ::gift-list/name
          {::gift-list/created-by
           [::user/id ::user/given-name ::user/family-name ::user/email]}]}]}]
-    [{[::user/auth0-id "auth0|abcd1234"]
+    #_[{[::user/auth0-id "auth0|abcd1234"]
       [::user/id ::user/given-name ::user/email
        {::user/created-gift-lists [::gift-list/id ::gift-list/name]}]}]
     #_[{:created-gift-lists

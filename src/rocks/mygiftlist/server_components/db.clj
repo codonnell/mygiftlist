@@ -7,7 +7,8 @@
             [next.jdbc.prepare :as p]
             [clojure.string :as str]
             [honeysql.core :as sql]
-            [honeysql.format :as sqlf]))
+            [honeysql.format :as sqlf]
+            honeysql-postgres.format))
 
 ;; TODO: Look into `:reWriteBatchedInserts`
 (def datasource-options
