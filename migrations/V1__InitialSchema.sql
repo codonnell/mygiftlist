@@ -25,7 +25,7 @@ CREATE TABLE gift (
   description text,
   url text,
   requested_by_id uuid NOT NULL REFERENCES "user" (id),
-  requested_at timestamp with time zone NOT NULL,
+  requested_at timestamp with time zone DEFAULT now() NOT NULL,
   claimed_by_id uuid REFERENCES "user" (id),
   claimed_at timestamp with time zone,
   gift_list_id uuid NOT NULL REFERENCES gift_list (id)
