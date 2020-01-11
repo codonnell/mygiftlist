@@ -1,6 +1,7 @@
 (ns rocks.mygiftlist.client
   (:require [rocks.mygiftlist.application :refer [SPA]]
             [rocks.mygiftlist.auth :as auth]
+            [rocks.mygiftlist.model.user :as model.user]
             [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.type.user :as user]
             [rocks.mygiftlist.ui.root :as ui.root]
@@ -26,10 +27,12 @@
       (<! (auth/handle-redirect-callback)))
     (if-let [authenticated (<! (auth/is-authenticated?))]
       (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
-        (comp/transact! SPA [(auth/set-current-user {::user/id sub ::user/email email})
+        (comp/transact! SPA [{(model.user/upsert-user-on-auth0-id {::user/auth0-id sub ::user/email email})
+                              (comp/get-query ui.nav/CurrentUser)}
                              (routing/route-to {:route-string "/home"})])
         (df/load! SPA [:component/id :left-nav] ui.nav/LeftNav))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})]))))
 
 (comment
+  (comp/get-query ui.nav/CurrentUser)
   )

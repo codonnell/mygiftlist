@@ -35,8 +35,3 @@
 
 (defn get-user-info []
   (go (<!p (.getUser @auth0-client))))
-
-(defmutation set-current-user
-  [user]
-  (action [{:keys [state]}]
-    (swap! state assoc-in [:component/id :current-user] user)))
