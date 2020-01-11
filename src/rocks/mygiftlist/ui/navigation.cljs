@@ -40,11 +40,12 @@
 
 (def ui-navbar (comp/factory Navbar))
 
-(defsc CreatedGiftListItem [this {::gift-list/keys [name]}]
+(defsc CreatedGiftListItem [this {::gift-list/keys [id name]}]
   {:query [::gift-list/id ::gift-list/name]
    :ident ::gift-list/id}
   (ui-menu-item {:active false
-                 :onClick #(js/console.log "Click" name)}
+                 :onClick #(comp/transact! this [(routing/route-to
+                                                  {:route-string (str "/gift-list/" id)})])}
     (dom/div {} name)))
 
 (def ui-created-gift-list-item (comp/factory CreatedGiftListItem {:keyfn ::gift-list/id}))
@@ -59,11 +60,12 @@
 
 (def ui-invited-gift-list-author (comp/factory InvitedGiftListAuthor))
 
-(defsc InvitedGiftListItem [this {::gift-list/keys [name created-by]}]
+(defsc InvitedGiftListItem [this {::gift-list/keys [id name created-by]}]
   {:query [::gift-list/id ::gift-list/name {::gift-list/created-by (comp/get-query InvitedGiftListAuthor)}]
    :ident ::gift-list/id}
   (ui-menu-item {:active false
-                 :onClick #(js/console.log "Click" name)}
+                 :onClick #(comp/transact! this [(routing/route-to
+                                                  {:route-string (str "/gift-list/" id)})])}
     (dom/div name)
     (ui-invited-gift-list-author created-by)))
 
@@ -79,24 +81,10 @@
     (ui-menu-item {}
       (ui-menu-header {} "My Lists")
       (ui-menu-menu {}
-        (mapv ui-created-gift-list-item created-gift-lists)
-        #_(ui-menu-item {:active false
-                       :onClick #(js/console.log "Nav birthday 2019")}
-          (dom/div "Birthday 2019"))
-        #_(ui-menu-item {:active false
-                       :onClick #(js/console.log "Nav christmas 2019")}
-          (dom/div "Christmas 2019"))))
+        (mapv ui-created-gift-list-item created-gift-lists)))
     (ui-menu-item {}
       (ui-menu-header {} "Invited Lists")
       (ui-menu-menu {}
-        (mapv ui-invited-gift-list-item invited-gift-lists)
-        #_(ui-menu-item {:active false
-                       :onClick #(js/console.log "Nav birthday 2019")}
-          (dom/div "Birthday 2019")
-          (dom/div "- Marty McFly"))
-        #_(ui-menu-item {:active false
-                       :onClick #(js/console.log "Nav christmas 2019")}
-          (dom/div "Christmas 2019")
-          (dom/div "- marty@example.com"))))))
+        (mapv ui-invited-gift-list-item invited-gift-lists)))))
 
 (def ui-left-nav (comp/factory LeftNav))

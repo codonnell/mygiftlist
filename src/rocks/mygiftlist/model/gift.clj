@@ -2,6 +2,7 @@
   (:require
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
    [honeysql.helpers :as sqlh]
+   [next.jdbc :as jdbc]
    [rocks.mygiftlist.server-components.db :as db]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
@@ -44,4 +45,42 @@
               (dissoc ::gift/requested-by-id ::gift/claimed-by-id ::gift/gift-list-id))))
     (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id})))
 
-(def gift-resolvers [gift-by-id-resolver])
+(defmutation create-gift [{::db/keys [pool] :keys [requester-auth0-id]} {::gift/keys [gift-list-id] :as gift}]
+  {::pc/input #{::gift/id ::gift/name ::gift/gift-list-id}
+   ::pc/output [::gift/id]}
+  (jdbc/with-transaction [tx pool {:isolation :serializable}]
+    (when (seq (db/execute! tx {:select [1]
+                                  :from [[:gift_list_access :gla]]
+                                  :where [:and
+                                          [:= :gla.auth0_id requester-auth0-id]
+                                          [:= :gla.gift_list_id gift-list-id]]}))
+      (db/execute! tx
+        {:insert-into :gift
+         :values [(assoc gift ::gift/requested-by-id {:select [:id]
+                                                      :from [:user]
+                                                      :where [:= :auth0_id requester-auth0-id]})]
+         :returning [:id]}))))
+
+(def gift-resolvers
+  [gift-by-id-resolver
+
+   create-gift])
+
+(comment
+  (def requester-auth0-id "auth0|5dfeec6f9567eb0dc0302207")
+  (def gift-list-id #uuid "dec2f711-7cac-4d91-bfad-0aeb0af85a52")
+  (def gift #::gift {:gift-list-id gift-list-id
+                     :id #uuid "e55e8bf0-aaff-4494-960d-2660609898aa"
+                     :name "A pony"})
+  (db/execute! db/pool {:select [1]
+                   :from [[:gift_list_access :gla]]
+                   :where [:and
+                           [:= :gla.auth0_id requester-auth0-id]
+                           [:= :gla.gift_list_id gift-list-id]]})
+  (db/execute! db/pool
+    {:insert-into :gift
+     :values [(assoc gift ::gift/requested-by-id {:select [:id]
+                                                  :from [:user]
+                                                  :where [:= :auth0_id requester-auth0-id]})]
+     :returning [:id]})
+  )

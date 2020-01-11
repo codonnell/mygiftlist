@@ -96,4 +96,8 @@
   (zipmap
     [:username :password :server-name :port-number :database-name]
     (drop 1 (re-find #"postgresql://(.+):(.*)@(.+):(\d+)/(.+)" "postgresql://postgres:@localhost:15432/postgres")))
+  (sql/format {:insert-into :foo
+               :values [{::config/id "id"
+                         ::config/full-name "name"}]}
+    :quoting :ansi)
   )
