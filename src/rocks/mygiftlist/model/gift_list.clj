@@ -42,7 +42,8 @@
     (db/execute! pool)
     (mapv (fn [{:keys [gift-ids] :as gift-list}]
             (-> gift-list
-              (assoc ::gift-list/gifts (mapv #(hash-map ::gift/id %) gift-ids))
+              (assoc ::gift-list/gifts
+                (into [] (keep #(when % (hash-map ::gift/id %))) gift-ids))
               (assoc-in [::gift-list/created-by ::user/id] (::user/id gift-list))
               (dissoc :gift-ids ::user/id))))
     (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id})))
