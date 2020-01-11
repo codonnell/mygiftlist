@@ -29,6 +29,7 @@
       (let [{:strs [sub email]} (js->clj (<! (auth/get-user-info)))]
         (comp/transact! SPA [{(model.user/upsert-user-on-auth0-id {::user/auth0-id sub ::user/email email})
                               (comp/get-query ui.nav/CurrentUser)}
+                             ;; TODO: Route to the right place after auth redirect
                              (routing/route-to {:route-string "/home"})])
         (df/load! SPA [:component/id :left-nav] ui.nav/LeftNav))
       (comp/transact! SPA [(routing/route-to {:route-string "/login"})]))))
