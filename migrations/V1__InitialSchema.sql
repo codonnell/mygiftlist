@@ -1,15 +1,13 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
-CREATE TABLE gift (
-    id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
-    name text NOT NULL,
-    description text,
-    url text,
-    requested_by_id uuid NOT NULL REFERENCES "user" (id),
-    requested_at timestamp with time zone NOT NULL,
-    claimed_by_id uuid REFERENCES "user" (id),
-    claimed_at timestamp with time zone,
-    gift_list_id uuid NOT NULL REFERENCES gift_list (id)
+CREATE TABLE "user" (
+  id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
+  email text NOT NULL UNIQUE,
+  auth0_id text NOT NULL UNIQUE,
+  given_name text,
+  family_name text,
+  allow_name_access boolean DEFAULT false NOT NULL,
+  created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -18,6 +16,19 @@ CREATE TABLE gift_list (
     name text NOT NULL,
     created_by_id uuid NOT NULL REFERENCES "user" (id),
     created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+CREATE TABLE gift (
+  id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
+  name text NOT NULL,
+  description text,
+  url text,
+  requested_by_id uuid NOT NULL REFERENCES "user" (id),
+  requested_at timestamp with time zone NOT NULL,
+  claimed_by_id uuid REFERENCES "user" (id),
+  claimed_at timestamp with time zone,
+  gift_list_id uuid NOT NULL REFERENCES gift_list (id)
 );
 
 
@@ -31,15 +42,15 @@ CREATE TABLE invitation (
 );
 
 
-CREATE TABLE public.invitation_acceptance (
+CREATE TABLE invitation_acceptance (
     id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
-    invitation_id uuid NOT NULL,
+    invitation_id uuid NOT NULL REFERENCES invitation (id),
     accepted_by_id uuid NOT NULL REFERENCES "user" (id),
     accepted_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
-CREATE TABLE public.revocation (
+CREATE TABLE revocation (
     id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
     gift_list_id uuid NOT NULL REFERENCES gift_list (id),
     created_by_id uuid NOT NULL REFERENCES "user" (id),
@@ -48,18 +59,7 @@ CREATE TABLE public.revocation (
 );
 
 
-CREATE TABLE public."user" (
-    id uuid PRIMARY KEY DEFAULT public.gen_random_uuid(),
-    email text NOT NULL,
-    auth0_id text NOT NULL,
-    given_name text,
-    family_name text,
-    allow_name_access boolean DEFAULT false NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-
-CREATE VIEW public.gift_list_access AS
+CREATE VIEW gift_list_access AS
  SELECT gl.id AS gift_list_id,
     u.auth0_id
    FROM (public.gift_list gl
