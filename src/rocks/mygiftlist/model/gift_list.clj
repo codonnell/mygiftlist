@@ -74,23 +74,24 @@
               [:= :u.auth0_id requester-auth0-id]
               [:= :r.id nil]]})})
 
-;; (defresolver invited-gift-lists-resolver [{:keys [db requester-auth0-id]} _]
-;;   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
-;;   {:invited-gift-lists (mapv first (d/q '{:find [(pull ?gift-list [::gift-list/id])]
-;;                                           :in [$ ?requester-auth0-id]
-;;                                           :where [[?user ::user/auth0-id ?requester-auth0-id]
-;;                                                   [?invitation ::invitation/accepted-by ?user]
-;;                                                   [?invitation ::invitation/gift-list ?gift-list]
-;;                                                   (not-join [?gift-list ?user]
-;;                                                     [?revocation ::revocation/user ?user]
-;;                                                     [?revocation ::revocation/gift-list ?gift-list])]}
-;;                                      db requester-auth0-id))})
+(defmutation create-gift-list [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id name]}]
+  {::pc/params #{::gift-list/id ::gift-list/name}
+   ::pc/output [::gift-list/id]}
+  (db/execute-one! pool
+    {:insert-into :gift_list
+     :values [{:id id
+               :name name
+               :created_by_id {:select [:id]
+                               :from [:user]
+                               :where [:= :auth0_id requester-auth0-id]}}]
+     :returning [:id]}))
 
 (def gift-list-resolvers
   [gift-list-by-id-resolver
    created-gift-lists-resolver
    invited-gift-lists-resolver
-   ])
+
+   create-gift-list])
 
 (comment
   (mount.core/start)

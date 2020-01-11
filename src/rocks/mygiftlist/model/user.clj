@@ -144,11 +144,8 @@
      ::user/created-revocations (mapv #(hash-map ::revocation/id %) created-revocation-ids)}))
 
 (defmutation upsert-user-on-auth0-id [{::db/keys [pool] :keys [requester-auth0-id] :as env} {::user/keys [auth0-id email]}]
-  {::pc/params #{::user/id ::user/email}
+  {::pc/params #{::user/auth0-id ::user/email}
    ::pc/output [::user/id]}
-  (println {:requester-auth0-id requester-auth0-id
-            :auth0-id auth0-id
-            :email email})
   (when (= requester-auth0-id auth0-id)
     (db/execute-one! pool
       {:insert-into :user
