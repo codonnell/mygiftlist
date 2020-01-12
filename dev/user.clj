@@ -1,6 +1,5 @@
 (ns user
   (:require
-   ;; TODO: Include namespaces with mount components to properly start system
    rocks.mygiftlist.server-components.http-server
    [clojure.tools.namespace.repl :as tools-ns :refer [set-refresh-dirs]]
    [expound.alpha :as expound]

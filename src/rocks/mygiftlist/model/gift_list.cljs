@@ -8,7 +8,6 @@
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
    [rocks.mygiftlist.type.gift-list.revocation :as revocation]))
 
-;; TODO: Handle created-at
 (defmutation create-gift-list [{::gift-list/keys [id] :as gift-list}]
   (action [{:keys [state]}]
     (let [current-user-id (get-in @state [:component/id :current-user ::user/id])
