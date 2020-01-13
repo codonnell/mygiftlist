@@ -16,28 +16,38 @@
 
    [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
-   [com.fulcrologic.semantic-ui.collections.form.ui-form-field :refer [ui-form-field]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-input :refer [ui-form-input]]
    ))
 
-(defsc GiftForm [this {::gift/keys [name] :as gift}]
-  {:query [::gift/id ::gift/name fs/form-config-join]
+(declare GiftList)
+
+(defsc GiftForm [this {::gift/keys [name gift-list-id] :as gift}]
+  {:query [::gift/id ::gift/name ::gift/gift-list-id fs/form-config-join]
    :ident ::gift/id
    :form-fields #{::gift/name}}
   (dom/div {}
     (ui-form {:onSubmit (fn [evt]
-                          (comp/transact! this [(model.gift/create-gift gift)])
-                          (m/set-string! this :ui/gift-name :value ""))}
-      (ui-form-field {}
-        (ui-form-input (cond-> {:placeholder "A pony"
-                                :onChange #(m/set-string! this ::gift/name :event %)
-                                :onBlur #(comp/transact! this [(fs/mark-complete! {:field ::gift/name})])
-                                :fluid true
-                                :value name}
-                         (fs/invalid-spec? gift ::gift/name)
-                         (assoc :error "Gift names cannot be blank"))))
+                          (when (fs/valid-spec? gift)
+                            (comp/transact! this [(model.gift/create-gift
+                                                    (select-keys gift
+                                                      [::gift/id ::gift/name ::gift/gift-list-id]))])
+                            (merge/merge-component! this GiftList
+                              {::gift-list/id gift-list-id
+                               :ui/gift-form (fs/add-form-config
+                                               GiftForm
+                                               {::gift/id (random-uuid)
+                                                ::gift/name ""
+                                                ::gift/gift-list-id gift-list-id})})))}
+      (ui-form-input {:placeholder "A pony"
+                      :onChange (fn [evt]
+                                  (m/set-string! this ::gift/name :event evt)
+                                  (comp/transact! this [(fs/mark-complete! {:field ::gift/name})]))
+                      :error (and (fs/invalid-spec? gift ::gift/name) "Gift name cannot be blank")
+                      :fluid true
+                      :value name})
       (ui-button {:type "submit"
-                  :primary true}
+                  :primary true
+                  :disabled (not (fs/valid-spec? gift))}
         "Submit"))))
 
 (def ui-gift-form (comp/factory GiftForm))
@@ -66,7 +76,8 @@
                           :ui/gift-form (fs/add-form-config
                                           GiftForm
                                           {::gift/id (random-uuid)
-                                           ::gift/name ""})})
+                                           ::gift/name ""
+                                           ::gift/gift-list-id id})})
                        (df/load app [::gift-list/id id] GiftList
                          {:post-mutation `dr/target-ready
                           :post-mutation-params {:target [::gift-list/id id]}})))))}
