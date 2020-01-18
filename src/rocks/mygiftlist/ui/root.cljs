@@ -6,10 +6,15 @@
             [rocks.mygiftlist.type.user :as user]
             [rocks.mygiftlist.ui.navigation :as ui.nav]
             [rocks.mygiftlist.ui.gift-list :as ui.gift-list]
+
+            [com.fulcrologic.fulcro.algorithms.form-state :as fs]
+            [com.fulcrologic.fulcro.algorithms.merge :as merge]
+            [com.fulcrologic.fulcro.application :as app]
             [com.fulcrologic.fulcro.components :as comp :refer [defsc]]
             [com.fulcrologic.fulcro.dom :as dom]
             [com.fulcrologic.fulcro.mutations :as m]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
+
             [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
@@ -17,34 +22,61 @@
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-item :refer [ui-menu-item]]
 
             [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
-            [com.fulcrologic.semantic-ui.collections.form.ui-form-field :refer [ui-form-field]]
+            [com.fulcrologic.semantic-ui.collections.form.ui-form-input :refer [ui-form-input]]
             [taoensso.timbre :as log]))
 
-(defsc Home [this {:ui/keys [gift-list-name]}]
-  {:query [:ui/gift-list-name]
+(declare Home)
+
+(defsc GiftListForm [this {::gift-list/keys [id name] :as gift-list}]
+  {:query [::gift-list/id ::gift-list/name fs/form-config-join]
+   :ident ::gift-list/id
+   :form-fields #{::gift-list/name}}
+  (let [validity (fs/get-spec-validity gift-list ::gift-list/name)]
+    (dom/div {}
+      (ui-form {:onSubmit (fn [evt]
+                            (if-not (= :valid validity)
+                              (comp/transact! this [(fs/mark-complete! {})])
+                              (do
+                                (comp/transact! this [(model.gift-list/create-gift-list
+                                                        (select-keys gift-list
+                                                          [::gift-list/id ::gift-list/name]))])
+                                (merge/merge-component! this Home
+                                  {:ui/gift-list-form (fs/add-form-config
+                                                        GiftListForm
+                                                        {::gift-list/id (random-uuid)
+                                                         ::gift-list/name ""})}))))}
+        (ui-form-input {:placeholder "Birthday 2020"
+                        :onChange (fn [evt]
+                                    (m/set-string! this ::gift-list/name :event evt)
+                                    (comp/transact! this [(fs/mark-complete! {:field ::gift-list/name})]))
+                        :error (and (= :invalid validity) "Gift list name cannot be blank")
+                        :fluid true
+                        :value name})
+        (ui-button {:type "submit"
+                    :primary true
+                    :disabled (= :invalid validity)}
+          "Submit")))))
+
+(def ui-gift-list-form (comp/factory GiftListForm))
+
+(defsc Home [this {:ui/keys [gift-list-form]}]
+  {:query [{:ui/gift-list-form (comp/get-query GiftListForm)}]
    :ident (fn [] [:component/id :home])
+   :initial-state {}
    :route-segment ["home"]
-   :initial-state {:ui/gift-list-name ""}}
+   :will-enter (fn [{::app/keys [state-atom] :as app} _]
+                 (when-not (get-in @state-atom [:component/id :home :ui/gift-list-form])
+                   (merge/merge-component! app Home
+                     {:ui/gift-list-form (fs/add-form-config
+                                           GiftListForm
+                                           {::gift-list/id (random-uuid)
+                                            ::gift-list/name ""})}))
+                 (dr/route-immediate [:component/id :home]))}
   (dom/div {}
     (dom/h3 "Home Screen")
     (dom/div "Just getting started? Create a new gift list!")
-    ;; TODO: Validate that the field isn't empty
     ;; TODO: Make this input not grow arbitrarily based on width of container div
-    (ui-form {:onSubmit (fn [evt]
-                          (let [id (random-uuid)]
-                            (comp/transact! this [(model.gift-list/create-gift-list
-                                                    #::gift-list {:id id
-                                                                  :name gift-list-name})])
-                            (m/set-string! this :ui/gift-list-name :value "")
-                            (comp/transact! this [(routing/route-to
-                                                    {:route-string (str "/gift-list/" id)})])))}
-      (ui-form-field {}
-        (dom/input {:placeholder "Birthday 2020"
-                    :onChange #(m/set-string! this :ui/gift-list-name :event %)
-                    :value gift-list-name}))
-      (ui-button {:type "submit"
-                  :primary true}
-        "Submit"))))
+    (ui-gift-list-form gift-list-form)))
 
 (defsc LoginForm [this _]
   {:query []

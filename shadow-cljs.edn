@@ -1,7 +1,6 @@
 {:deps {:aliases [:dev]}
  :source-paths ["src"]
- :nrepl {:port 9000
-         :middleware [cider.nrepl/cider-middleware
+ :nrepl {:middleware [cider.nrepl/cider-middleware
                       refactor-nrepl.middleware/wrap-refactor]}
  :builds {:dev {:target     :browser
                 :output-dir "resources/public/js"

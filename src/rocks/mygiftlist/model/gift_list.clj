@@ -56,7 +56,8 @@
       :modifiers [:distinct]
       :from [[:gift_list :gl]]
       :join [[:user :u] [:= :u.id :gl.created_by_id]]
-      :where [:= :u.auth0_id requester-auth0-id]})})
+      :where [:= :u.auth0_id requester-auth0-id]
+      :order-by [[:gl.created_at :desc]]})})
 
 (defresolver invited-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
@@ -73,11 +74,12 @@
                                     [:= :r.gift_list_id :gl.id]]]
       :where [:and
               [:= :u.auth0_id requester-auth0-id]
-              [:= :r.id nil]]})})
+              [:= :r.id nil]]
+      :order-by [[:gl.created_at :desc]]})})
 
 (defmutation create-gift-list [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id name]}]
   {::pc/params #{::gift-list/id ::gift-list/name}
-   ::pc/output [::gift-list/id]}
+   ::pc/output [::gift-list/id ::gift-list/created-at]}
   (db/execute-one! pool
     {:insert-into :gift_list
      :values [{:id id
@@ -85,7 +87,7 @@
                :created_by_id {:select [:id]
                                :from [:user]
                                :where [:= :auth0_id requester-auth0-id]}}]
-     :returning [:id]}))
+     :returning [:id :created_at]}))
 
 (def gift-list-resolvers
   [gift-list-by-id-resolver
