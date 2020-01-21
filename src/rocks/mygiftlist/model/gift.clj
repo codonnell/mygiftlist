@@ -43,7 +43,7 @@
               (assoc-in [::gift/claimed-by ::user/id] claimed-by-id)
               (assoc-in [::gift/gift-list ::gift-list/id] gift-list-id)
               (dissoc ::gift/requested-by-id ::gift/claimed-by-id ::gift/gift-list-id))))
-    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift-list/id})))
+    (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::gift/id})))
 
 (defmutation create-gift [{::db/keys [pool] :keys [requester-auth0-id]} {::gift/keys [gift-list-id] :as gift}]
   {::pc/input #{::gift/id ::gift/name ::gift/gift-list-id}

@@ -53,7 +53,6 @@
   {:created-gift-lists
    (db/execute! pool
      {:select [:gl.id]
-      :modifiers [:distinct]
       :from [[:gift_list :gl]]
       :join [[:user :u] [:= :u.id :gl.created_by_id]]
       :where [:= :u.auth0_id requester-auth0-id]
@@ -64,7 +63,6 @@
   {:invited-gift-lists
    (db/execute! pool
      {:select [:gl.id]
-      :modifiers [:distinct]
       :from [[:gift_list :gl]]
       :join [[:invitation :i] [:= :i.gift_list_id :gl.id]
              [:invitation_acceptance :ia] [:= :ia.invitation_id :i.id]
@@ -79,7 +77,7 @@
 
 (defmutation create-gift-list [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id name]}]
   {::pc/params #{::gift-list/id ::gift-list/name}
-   ::pc/output [::gift-list/id ::gift-list/created-at]}
+   ::pc/output [::gift-list/id]}
   (db/execute-one! pool
     {:insert-into :gift_list
      :values [{:id id
@@ -87,7 +85,7 @@
                :created_by_id {:select [:id]
                                :from [:user]
                                :where [:= :auth0_id requester-auth0-id]}}]
-     :returning [:id :created_at]}))
+     :returning [:id]}))
 
 (def gift-list-resolvers
   [gift-list-by-id-resolver
@@ -112,6 +110,21 @@
                         :quoting :ansi)
                       db/query-opts)]
     raw-results)
+  (def requester-auth0-id "auth0|5dfeec6f9567eb0dc0302207")
+  (def pool db/pool)
+  (sql/format {:select [:gl.id]
+               :modifiers [:distinct]
+               :from [[:gift_list :gl]]
+               :join [[:invitation :i] [:= :i.gift_list_id :gl.id]
+                      [:invitation_acceptance :ia] [:= :ia.invitation_id :i.id]
+                      [:user :u] [:= :u.id :ia.accepted_by_id]]
+               :left-join [[:revocation :r] [:and
+                                             [:= :r.revoked_user_id :u.id]
+                                             [:= :r.gift_list_id :gl.id]]]
+               :where [:and
+                       [:= :u.auth0_id "auth0|1234"]
+                       [:= :r.id nil]]
+               :order-by [[:gl.created_at :desc]]})
   (jdbc/execute! db/pool ["SELECT * FROM gift"] db/query-opts)
   (def requester-auth0-id "auth0|abc123")
   (db/execute! db/pool

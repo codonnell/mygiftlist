@@ -73,8 +73,20 @@
 
 (comment
   (mount.core/start)
-  (parser {:ring/request {:claims {:sub "auth0|abcd1234" #_"auth0|5dc81bfc1658c30e5fe9b877"}}}
-    `[{(model.user/upsert-user-on-auth0-id #::user {:auth0-id "auth0|abcd1234"
+  (parser {:ring/request {:claims {:sub "auth0|5dfeec6f9567eb0dc0302207"}}}
+    [{[:component/id :left-nav]
+      [{:created-gift-lists
+        [:rocks.mygiftlist.type.gift-list/id
+         :rocks.mygiftlist.type.gift-list/name]}
+       {:invited-gift-lists
+        [:rocks.mygiftlist.type.gift-list/id
+         :rocks.mygiftlist.type.gift-list/name
+         {:rocks.mygiftlist.type.gift-list/created-by
+          [:rocks.mygiftlist.type.user/id
+           :rocks.mygiftlist.type.user/given-name
+           :rocks.mygiftlist.type.user/family-name
+           :rocks.mygiftlist.type.user/email]}]}]}]
+    #_`[{(model.user/upsert-user-on-auth0-id #::user {:auth0-id "auth0|abcd1234"
                                                     :email "fake2@example.com"})
        [::user/id ::user/email ::user/auth0-id ::user/given-name ::user/family-name]}]
     #_[{[::gift-list/id #uuid "df687d54-c716-4fcc-9f88-03f4fee90209"]
