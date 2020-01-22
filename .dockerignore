@@ -1,0 +1,4 @@
+.git
+.shadow-cljs
+node_modules
+.cpcache
