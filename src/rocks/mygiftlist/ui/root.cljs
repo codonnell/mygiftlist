@@ -59,7 +59,14 @@
 
 (def ui-gift-list-form (comp/factory GiftListForm))
 
-(defsc Home [this {:ui/keys [gift-list-form]}]
+(defsc Loading [this _]
+  {:query []
+   :ident (fn [] [:component/id ::loading])
+   :initial-state {}
+   :route-segment ["loading"]}
+  (dom/div "Loading..."))
+
+(defsc Home [this {:ui/keys [gift-list-form] :as props}]
   {:query [{:ui/gift-list-form (comp/get-query GiftListForm)}]
    :ident (fn [] [:component/id :home])
    :initial-state {}
@@ -90,7 +97,11 @@
                          :onClick #(auth/login)}
                "Log in or sign up"))))
 
-(defrouter MainRouter [_ _] {:router-targets [LoginForm Home ui.gift-list/GiftList]})
+(defrouter MainRouter [_ {:keys [current-state] :as props}]
+  {:router-targets [Loading LoginForm Home ui.gift-list/GiftList]}
+  (case current-state
+    :pending (dom/div "Pending...")
+    (dom/div "Loading...")))
 
 (def ui-main-router (comp/factory MainRouter))
 

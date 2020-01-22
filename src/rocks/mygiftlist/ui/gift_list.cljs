@@ -71,7 +71,6 @@
    :route-segment ["gift-list" ::gift-list/id]
    :will-enter (fn [{::app/keys [state-atom] :as app} {::gift-list/keys [id]}]
                  (let [id (uuid id)]
-                   ;; TODO: Handle canceling load if route is canceled?
                    (dr/route-deferred [::gift-list/id id]
                      (fn []
                        (merge/merge-component! app GiftList

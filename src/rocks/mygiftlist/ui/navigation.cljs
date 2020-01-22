@@ -34,7 +34,7 @@
     (ui-menu {:secondary true}
       (ui-menu-item {:name "home"
                      :active false
-                     :onClick #(comp/transact! this [(routing/route-to {:route-string (if logged-in "/home" "/login")})])})
+                     :onClick #(comp/transact! this [(routing/route-to {:path (if logged-in "/home" "/login")})])})
       (ui-menu-menu {:position "right"}
         (ui-current-user current-user)))))
 
@@ -45,7 +45,7 @@
    :ident ::gift-list/id}
   (ui-menu-item {:active false
                  :onClick #(comp/transact! this [(routing/route-to
-                                                  {:route-string (str "/gift-list/" id)})])}
+                                                  {:path (str "/gift-list/" id)})])}
     (dom/div {} name)))
 
 (def ui-created-gift-list-item (comp/factory CreatedGiftListItem {:keyfn ::gift-list/id}))
@@ -65,7 +65,7 @@
    :ident ::gift-list/id}
   (ui-menu-item {:active false
                  :onClick #(comp/transact! this [(routing/route-to
-                                                  {:route-string (str "/gift-list/" id)})])}
+                                                  {:path (str "/gift-list/" id)})])}
     (dom/div name)
     (ui-invited-gift-list-author created-by)))
 
