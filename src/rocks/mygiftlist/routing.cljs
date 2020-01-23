@@ -9,14 +9,14 @@
 (defonce page-loaded (atom false))
 
 (defn path->route-segments [path]
-  (into [] (drop 1) (str/split (first (str/split path "?")) "/")))
+  (let [route-segments (into [] (drop 1) (str/split (first (str/split path "?")) "/"))]
+    (if (seq route-segments)
+      (dr/change-route SPA route-segments)
+      (dr/change-route SPA ["home"]))))
 
 (defonce history (pushy/pushy
                    (fn [path]
-                     (let [route-segments (path->route-segments path)]
-                       (if (seq route-segments)
-                         (dr/change-route SPA route-segments)
-                         (dr/change-route SPA ["home"]))))
+                     (dr/change-route SPA (path->route-segments path)))
                    (fn [uri]
                      (if-not @page-loaded
                        (do (reset! page-loaded true)
