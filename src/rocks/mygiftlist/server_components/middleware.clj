@@ -9,7 +9,9 @@
             [ring.util.response :as resp]
             [ring.middleware.defaults :refer [wrap-defaults api-defaults]]
             [ring.middleware.jwt :as jwt]
-            [ring.middleware.gzip :as gzip]))
+            [ring.middleware.gzip :as gzip]
+            [taoensso.timbre :as log]
+            [next.jdbc :as jdbc]))
 
 (defn not-found-handler [_]
   (assoc-in (resp/resource-response "public/index.html")
@@ -24,6 +26,18 @@
                                  ::db/pool pool} tx)))
       (handler request))))
 
+(defn wrap-healthcheck [handler uri pool]
+  (fn [request]
+    (if (= uri (:uri request))
+      (try (jdbc/execute-one! pool ["SELECT 1 FROM \"user\""])
+           {:status 200
+            :body ""}
+           (catch Throwable e
+             (log/error (with-out-str (.printStackTrace e)))
+             {:status 500
+              :body ""}))
+      (handler request))))
+
 (defstate handler
   :start
   (-> not-found-handler
@@ -33,4 +47,5 @@
     wrap-transit-params
     wrap-transit-response
     (wrap-defaults (assoc api-defaults :static {:resources "public"}))
-    gzip/wrap-gzip))
+    gzip/wrap-gzip
+    (wrap-healthcheck "/healthcheck" db/pool)))
