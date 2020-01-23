@@ -43,6 +43,7 @@
                                                     ::gift/name ""
                                                     ::gift/gift-list-id gift-list-id})}))))}
         (ui-form-input {:placeholder "A pony"
+                        :className "mgl_text-input"
                         :onChange (fn [evt]
                                     (m/set-string! this ::gift/name :event evt)
                                     (comp/transact! this [(fs/mark-complete! {:field ::gift/name})]))
@@ -84,7 +85,6 @@
                        (df/load app [::gift-list/id id] GiftList
                          {:post-mutation `dr/target-ready
                           :post-mutation-params {:target [::gift-list/id id]}})))))}
-  ;; TODO: Make this input not grow arbitrarily based on width of container div
   (dom/div {}
     (dom/h3 {} name)
     (ui-gift-form gift-form)

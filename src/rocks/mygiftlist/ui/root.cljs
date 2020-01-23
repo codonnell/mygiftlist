@@ -46,6 +46,7 @@
                                                         {::gift-list/id (random-uuid)
                                                          ::gift-list/name ""})}))))}
         (ui-form-input {:placeholder "Birthday 2020"
+                        :className "mgl_text-input"
                         :onChange (fn [evt]
                                     (m/set-string! this ::gift-list/name :event evt)
                                     (comp/transact! this [(fs/mark-complete! {:field ::gift-list/name})]))
@@ -82,7 +83,6 @@
   (dom/div {}
     (dom/h3 "Home Screen")
     (dom/div "Just getting started? Create a new gift list!")
-    ;; TODO: Make this input not grow arbitrarily based on width of container div
     (ui-gift-list-form gift-list-form)))
 
 (defsc LoginForm [this _]

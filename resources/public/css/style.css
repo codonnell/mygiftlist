@@ -13,3 +13,7 @@
 .leftnav.menu {
   margin-right: 20px;
 }
+
+.mgl_text-input {
+  max-width: 200px;
+}
