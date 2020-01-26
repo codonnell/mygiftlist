@@ -38,10 +38,15 @@ services:
         order: start-first
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.backend.rule=Host(`mygiftlist.rocks`)"
-        - "traefik.http.routers.backend.entrypoints=websecure"
-        - "traefik.http.routers.backend.tls.certresolver=letsencryptresolver"
-        - "traefik.http.services.backend.loadbalancer.server.port=8080"
+        - "traefik.http.middlewares.backend-redirect-websecure.redirectscheme.scheme=https"
+        - "traefik.http.routers.backend-web.middlewares=backend-redirect-websecure"
+        - "traefik.http.routers.backend-web.rule=Host(`mygiftlist.rocks`)"
+        - "traefik.http.routers.backend-web.entrypoints=web"
+        - "traefik.http.routers.backend-websecure.rule=Host(`mygiftlist.rocks`)"
+        - "traefik.http.routers.backend-websecure.tls.certresolver=le"
+        - "traefik.http.routers.backend-websecure.tls=true"
+        - "traefik.http.routers.backend-websecure.entrypoints=websecure"
+        - "traefik.http.services.backend-websecure.loadbalancer.server.port=8080"
 
 networks:
   traefik-public:
