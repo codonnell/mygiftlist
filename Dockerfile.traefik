@@ -1,0 +1,3 @@
+FROM traefik:v2.1.3
+
+COPY ./traefik-dynamic-config.yaml /etc/traefik/traefik.yaml

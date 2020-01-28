@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mygiftlist
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: mygiftlist
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mygiftlist
+spec:
+  selector:
+    matchLabels:
+      app: mygiftlist
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mygiftlist
+    spec:
+      containers:
+      - name: mygiftlist
+        image: cpodonnell/mygiftlistrocks:latest
+        volumeMounts:
+        - name: db-secret
+          mountPath: "/run/secrets"
+          readOnly: true
+        ports:
+        - containerPort: 8080
+      volumes:
+      - name: db-secret
+        secret:
+          secretName: db-secret

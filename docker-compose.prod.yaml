@@ -45,8 +45,10 @@ services:
         - "traefik.http.routers.backend-websecure.rule=Host(`mygiftlist.rocks`)"
         - "traefik.http.routers.backend-websecure.tls.certresolver=le"
         - "traefik.http.routers.backend-websecure.tls=true"
+        - "traefik.http.routers.backend-websecure.tls.options=backend-options@file"
         - "traefik.http.routers.backend-websecure.entrypoints=websecure"
         - "traefik.http.services.backend-websecure.loadbalancer.server.port=8080"
+        - "traefik.tls.options.backend-options.minversion=VersionTLS12"
 
 networks:
   traefik-public:
