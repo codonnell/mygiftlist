@@ -29,9 +29,15 @@
   :start (pool/make-datasource datasource-options)
   :stop (pool/close-datasource pool))
 
+(defn- qualify [table]
+  (str "rocks.mygiftlist.type."
+    (case table
+      "invitation" "gift-list.invitation"
+      "revocation" "gift-list.revocation"
+      table)))
+
 (defn as-qualified-kebab-maps [rs opts]
-  (let [kebab #(str/replace % #"_" "-")
-        qualify #(str "rocks.mygiftlist.type." %)]
+  (let [kebab #(str/replace % #"_" "-")]
     (result-set/as-modified-maps rs (assoc opts
                                       :qualifier-fn (comp qualify kebab)
                                       :label-fn kebab))))

@@ -12,7 +12,9 @@
    [rocks.mygiftlist.model.user :as model.user]
    [rocks.mygiftlist.model.gift :as model.gift]
    [rocks.mygiftlist.model.gift-list :as model.gift-list]
-   [rocks.mygiftlist.server-components.db :as db]))
+   [rocks.mygiftlist.model.gift-list.invitation :as model.gift-list.invitation]
+   [rocks.mygiftlist.server-components.db :as db]
+   [rocks.mygiftlist.type.gift-list.invitation :as invitation]))
 
 (pc/defresolver index-explorer [env _]
   {::pc/input  #{:com.wsscode.pathom.viz.index-explorer/id}
@@ -25,7 +27,8 @@
 (def all-resolvers [index-explorer
                     model.user/user-resolvers
                     model.gift/gift-resolvers
-                    model.gift-list/gift-list-resolvers])
+                    model.gift-list/gift-list-resolvers
+                    model.gift-list.invitation/invitation-resolvers])
 
 (defn preprocess-parser-plugin
   "Helper to create a plugin that can view/modify the env/tx of a top-level request.
@@ -74,7 +77,13 @@
 (comment
   (mount.core/start)
   (parser {:ring/request {:claims {:sub "auth0|5dfeec6f9567eb0dc0302207"}}}
-    [{[:component/id :left-nav]
+    [{[::invitation/id #uuid "10f3b1fd-1ca5-418d-b554-feffd0a2a159"]
+      [::invitation/id ::invitation/token ::invitation/created-at ::invitation/expires-at
+       {::invitation/user [::user/id]}
+       {::invitation/gift-list [::gift-list/id ::gift-list/name]}]}]
+    #_`[(model.gift-list.invitation/create-invitation
+        {::gift-list/id #uuid "0dc57c27-78a4-46ba-9997-6113c529b8bc"})]
+    #_[{[:component/id :left-nav]
       [{:created-gift-lists
         [:rocks.mygiftlist.type.gift-list/id
          :rocks.mygiftlist.type.gift-list/name]}
@@ -96,26 +105,5 @@
     #_[{:created-gift-lists [::gift-list/id ::gift-list/name
                            {::gift-list/created-by [::user/id ::user/auth0-id]}
                            {::gift-list/gifts [::gift/id ::gift/name ::gift/description]}]}
-     {:invited-gift-lists [::gift-list/id ::gift-list/name]}]
-    #_[{[:component/id :left-nav]
-      [{:created-gift-lists [::gift-list/id ::gift-list/name]}
-       {:invited-gift-lists
-        [::gift-list/id ::gift-list/name
-         {::gift-list/created-by
-          [::user/id ::user/given-name ::user/family-name ::user/email]}]}]}]
-    #_[{[::user/auth0-id "auth0|abcd1234"]
-      [::user/id ::user/given-name ::user/email
-       {::user/created-gift-lists [::gift-list/id ::gift-list/name]}]}]
-    #_[{:created-gift-lists
-      [::gift-list/id ::gift-list/name
-       {::gift-list/created-by
-        [::user/id ::user/given-name ::user/family-name ::user/email]}]}
-     {:invited-gift-lists
-      [::gift-list/id ::gift-list/name
-       {::gift-list/created-by
-        [::user/id ::user/given-name ::user/family-name ::user/email]}]}]
-    #_[{[::gift-list/id #uuid "0ebaf3ee-7d0d-4573-880a-ad2cb8582ec7"]
-      [::gift-list/id ::gift-list/name ::gift-list/created-at
-       {::gift-list/gifts
-        [::gift/id ::gift/name ::gift/description]}]}])
+     {:invited-gift-lists [::gift-list/id ::gift-list/name]}])
   )
