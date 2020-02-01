@@ -1,0 +1,6 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: auth-config
+data:
+  JWK_ENDPOINT: https://mygiftlistrocks.auth0.com/.well-known/jwks.json

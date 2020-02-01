@@ -1,10 +1,12 @@
 FROM openjdk:11.0.5-jre-slim-buster
 
+COPY ca-certificate.crt /root/.postgresql/root.crt
+
 RUN apt update && apt -y install --no-install-recommends curl && rm -rf /var/cache/apt/archives/*
 
 COPY docker-healthcheck /usr/local/bin
 
-HEALTHCHECK --start-period=30s CMD ["docker-healthcheck"]
+HEALTHCHECK --start-period=60s CMD ["docker-healthcheck"]
 
 COPY target/mygiftlistrocks.jar /mygiftlistrocks.jar
 

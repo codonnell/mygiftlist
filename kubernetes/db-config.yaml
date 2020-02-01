@@ -1,0 +1,11 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: db-config
+data:
+  POSTGRES_DB: defaultdb
+  POSTGRES_HOSTNAME: private-mygiftlist-do-user-628216-0.db.ondigitalocean.com
+  POSTGRES_PASSWORD_FILE: /db/secrets/db_password
+  POSTGRES_PORT: "25060"
+  POSTGRES_SSLMODE: require
+  POSTGRES_USER_FILE: /db/secrets/db_user

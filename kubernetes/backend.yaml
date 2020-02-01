@@ -26,9 +26,17 @@ spec:
       containers:
       - name: mygiftlist
         image: cpodonnell/mygiftlistrocks:latest
+        env:
+        - name: PORT
+          value: "8080"
+        envFrom:
+        - configMapRef:
+            name: db-config
+        - configMapRef:
+            name: auth-config
         volumeMounts:
         - name: db-secret
-          mountPath: "/run/secrets"
+          mountPath: "/db/secrets"
           readOnly: true
         ports:
         - containerPort: 8080

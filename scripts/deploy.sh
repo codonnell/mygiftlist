@@ -10,8 +10,7 @@ docker build -t cpodonnell/mygiftlistrocks:latest .
 
 docker push cpodonnell/mygiftlistrocks:latest
 
-scp ./docker-compose.prod.yaml mygiftlistrocks:~/docker-compose.mygiftlistrocks.yaml
-
-ssh mygiftlistrocks "docker stack deploy -c docker-compose.mygiftlistrocks.yaml mygiftlistrocks"
+# TODO: We need to start using commit sha tags to really update
+kubectl apply -f kubernetes/backend.yaml
 
 popd
