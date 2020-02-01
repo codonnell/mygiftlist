@@ -1,6 +1,8 @@
 - [x] Server-side configuration
 - [x] All entity resolvers
-- [ ] Deploy to heroku free tier
-- [ ] Upsert user on login
-- [ ] Mutations
-- [ ] Remote loads via routing layer
+- [x] Upsert user on login
+- [x] Mutations
+- [x] Remote loads via routing layer
+- [ ] Validate mutation input (use spec?)
+- [ ] Remote mutation error handling
+- [ ] Write parser tests

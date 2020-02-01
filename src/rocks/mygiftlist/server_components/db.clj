@@ -33,6 +33,7 @@
   (str "rocks.mygiftlist.type."
     (case table
       "invitation" "gift-list.invitation"
+      "invitation-acceptance" "gift-list.invitation-acceptance"
       "revocation" "gift-list.revocation"
       table)))
 

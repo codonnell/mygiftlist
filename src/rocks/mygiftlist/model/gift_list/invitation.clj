@@ -9,9 +9,11 @@
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
+   [rocks.mygiftlist.type.gift-list.invitation-acceptance :as invitation-acceptance]
    [rocks.mygiftlist.type.gift-list.revocation :as revocation]
    [taoensso.timbre :as log])
-  (:import [java.security SecureRandom]))
+  (:import [java.security SecureRandom]
+           [java.time Instant]))
 
 (def ^:const token-length 22)
 
@@ -65,28 +67,93 @@
               (assoc-in [::invitation/gift-list ::gift-list/id] gift-list-id))))
     (pc/batch-restore-sort {::pc/inputs inputs ::pc/key ::invitation/id})))
 
+(defresolver invitation-by-token-resolver
+  [{::db/keys [pool] :keys [requester-auth0-id]} {::invitation/keys [token]}]
+  {::pc/input #{::invitation/token}
+   ::pc/output [::invitation/id]}
+  (db/execute-one! pool
+    {:select [:i.id]
+     :from [[:invitation :i]]
+     :where [:= :i.token token]}))
+
+(defresolver created-invitations-resolver
+  [{::db/keys [pool] :keys [requester-auth0-id]} _]
+  {::pc/output [{:created-invitations [::invitation/id]}]}
+  {:created-invitations
+   (db/execute! pool
+     {:select [:i.id]
+      :from [[:invitation :i]]
+      :join [[:user :u] [:= :u.id :i.created_by_id]]
+      :where [:= :u.auth0_id requester-auth0-id]})})
+
 (defmutation create-invitation
   [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id]}]
   {::pc/params #{::gift-list/id}
    ::pc/output [::invitation/id]}
-  (when (seq (db/execute! pool
-               {:select [1]
-                :from [[:gift_list :gl]]
-                :join [[:user :u] [:= :u.id :gl.created_by_id]]
-                :where [:and
-                        [:= :u.auth0_id requester-auth0-id]
-                        [:= :gl.id id]]}))
-    (let [token (generate-token)]
-      (db/execute-one! pool
-        {:insert-into :invitation
-         :values [{:token token
-                   :gift-list-id id
-                   :created-by-id {:select [:id]
-                                   :from [:user]
-                                   :where [:= :auth0_id requester-auth0-id]}}]
-         :returning [:id]}))))
+  (jdbc/with-transaction [tx pool {:isolation :serializable}]
+    (when (seq (db/execute! tx
+                 {:select [1]
+                  :from [[:gift_list :gl]]
+                  :join [[:user :u] [:= :u.id :gl.created_by_id]]
+                  :where [:and
+                          [:= :u.auth0_id requester-auth0-id]
+                          [:= :gl.id id]]}))
+      (let [token (generate-token)]
+        (db/execute-one! tx
+          {:insert-into :invitation
+           :values [{:token token
+                     :gift-list-id id
+                     :created-by-id {:select [:id]
+                                     :from [:user]
+                                     :where [:= :auth0_id requester-auth0-id]}}]
+           :returning [:id]})))))
 
-(def invitation-resolvers [invitation-by-id-resolver create-invitation])
+(defmutation accept-invitation
+  [{::db/keys [pool] :keys [requester-auth0-id]} {::user/keys [id] ::invitation/keys [token]}]
+  {::pc/params #{::user/id ::invitation/token}
+   ::pc/output [::invitation-acceptance/id]}
+  (jdbc/with-transaction [tx pool {:isolation :serializable}]
+    (let [user-id-matches-requester
+          (seq (db/execute! tx
+                 {:select [1]
+                  :from [[:user :u]]
+                  :where [:and
+                          [:= :u.id id]
+                          [:= :u.auth0_id requester-auth0-id]]}))
+          user-didnt-create-invitation
+          (empty? (db/execute! tx
+                    {:select [1]
+                     :from [[:invitation :i]]
+                     :join [[:user :u] [:= :u.id :i.created_by_id]]
+                     :where [:and
+                             [:= :i.token token]
+                             [:= :u.auth0_id requester-auth0-id]]}))
+          invitation-hasnt-expired
+          (seq (db/execute! tx
+                 {:select [1]
+                  :from [[:invitation :i]]
+                  :where [:< (Instant/now) :i.expires_at]}))]
+      (when (and user-id-matches-requester user-didnt-create-invitation invitation-hasnt-expired)
+        (db/execute-one! tx
+          {:insert-into :invitation-acceptance
+           :values [{:invitation-id {:select [:id]
+                                     :from [[:invitation :i]]
+                                     :where [:= :i.token token]}
+                     :accepted-by-id {:select [:id]
+                                      :from [[:user :u]]
+                                      :where [:= :u.auth0_id requester-auth0-id]}}]
+           :upsert {:on-conflict [:invitation_id :accepted_by_id]
+                    ;; Using do-update-set here for no-op so that the returning
+                    ;; clause returns an id when the invitation has previously
+                    ;; been accepted. (Upsert semantics)
+                    :do-update-set [:invitation_id :accepted_by_id]}
+           :returning [:id]})))))
+
+(def invitation-resolvers [invitation-by-id-resolver
+                           invitation-by-token-resolver
+                           created-invitations-resolver
+                           create-invitation
+                           accept-invitation])
 
 (comment
   (generate-token)

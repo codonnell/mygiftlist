@@ -76,10 +76,14 @@
 
 (comment
   (mount.core/start)
-  (parser {:ring/request {:claims {:sub "auth0|5dfeec6f9567eb0dc0302207"}}}
-    [{[::invitation/id #uuid "10f3b1fd-1ca5-418d-b554-feffd0a2a159"]
+  (parser {:ring/request {:claims {:sub "auth0|abcd1234" #_"auth0|5dfeec6f9567eb0dc0302207"}}}
+    `[(model.gift-list.invitation/accept-invitation
+        ~{::user/id #uuid "685cda9e-eb90-470c-b2d1-41cfae2f824b"
+          ::invitation/token "odSOEWfjkeEuTiY4MBAnFy"})]
+    #_[{:created-invitations [::invitation/id ::invitation/token]}]
+    #_[{[::invitation/id #uuid "10f3b1fd-1ca5-418d-b554-feffd0a2a159"]
       [::invitation/id ::invitation/token ::invitation/created-at ::invitation/expires-at
-       {::invitation/user [::user/id]}
+       {::invitation/created-by [::user/id ::user/auth0-id ::user/email]}
        {::invitation/gift-list [::gift-list/id ::gift-list/name]}]}]
     #_`[(model.gift-list.invitation/create-invitation
         {::gift-list/id #uuid "0dc57c27-78a4-46ba-9997-6113c529b8bc"})]
