@@ -6,6 +6,7 @@ COPY deps.edn ./
 RUN clojure -A:dev:depstar -Stree
 RUN mkdir -p resources/public/js
 COPY resources/public/css ./resources/public/css
+COPY resources/config.edn ./resources/config.edn
 COPY shadow-cljs.edn ./
 COPY src ./src
 RUN ./node_modules/.bin/shadow-cljs release prod
