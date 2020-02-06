@@ -47,6 +47,9 @@ jobs:
     - name: Verify database migration deployment
       run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig wait --for=condition=complete job/migrate-db
 
+    - name: Clean up database migration job
+      run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig delete job migrate-db
+
     - name: Deploy backend to DigitalOcean Kubernetes
       run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig apply -f $GITHUB_WORKSPACE/kubernetes/backend.yaml
 
