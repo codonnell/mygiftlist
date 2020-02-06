@@ -1,5 +1,6 @@
 FROM clojure:openjdk-11-tools-deps-1.10.1.502 AS builder
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - && apt install nodejs
+COPY resources/public/index.html ./resources/public/index.html
 COPY package.json package-lock.json ./
 RUN npm install
 COPY deps.edn ./
