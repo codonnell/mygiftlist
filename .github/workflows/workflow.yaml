@@ -13,9 +13,6 @@ jobs:
     - name: Checkout master
       uses: actions/checkout@master
 
-    - name: Update SHA
-      run: echo $GITHUB_SHA > $GITHUB_WORKSPACE/site/_meta
-
     - name: Build database migration image
       run: docker build -f Dockerfile.flyway -t cpodonnell/mygiftlistrocks:migrate-$(echo $GITHUB_SHA | head -c7) .
 
