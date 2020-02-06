@@ -7,7 +7,7 @@ spec:
     spec:
       containers:
       - name: migrate-db
-        image: cpodonnell/mygiftlistrocks:migrate-<IMAGE>
+        image: <IMAGE>
         envFrom:
         - configMapRef:
             name: db-config

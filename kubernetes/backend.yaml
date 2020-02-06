@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
       - name: mygiftlist
-        image: cpodonnell/mygiftlistrocks:<IMAGE>
+        image: <IMAGE>
         env:
         - name: PORT
           value: "8080"
