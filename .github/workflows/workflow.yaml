@@ -42,13 +42,13 @@ jobs:
         args: kubernetes cluster kubeconfig show mygiftlist > $GITHUB_WORKSPACE/.kubeconfig
 
     - name: Deploy database migrations to DigitalOcean Kubernetes
-      run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig apply -f $GITHUB_WORKSPACE/kubernetes/migrate-db-job.yml
+      run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig apply -f $GITHUB_WORKSPACE/kubernetes/migrate-db-job.yaml
 
     - name: Verify database migration deployment
       run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig wait --for=condition=complete job/migrate-db
 
     - name: Deploy backend to DigitalOcean Kubernetes
-      run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig apply -f $GITHUB_WORKSPACE/kubernetes/backend.yml
+      run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig apply -f $GITHUB_WORKSPACE/kubernetes/backend.yaml
 
     - name: Verify backend deployment
       run: kubectl --kubeconfig=$GITHUB_WORKSPACE/.kubeconfig rollout status deployment/mygiftlist
