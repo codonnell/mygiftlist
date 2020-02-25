@@ -1,19 +1,23 @@
 .home.container {
-  display: flex;
+    display: flex;
 }
 
 .login.container {
-  text-align: center;
+    text-align: center;
 }
 
 .login.combined-button {
-  margin: 10px;
+    margin: 10px;
 }
 
 .leftnav.menu {
-  margin-right: 20px;
+    margin-right: 20px;
 }
 
 .mgl_text-input {
-  max-width: 200px;
+    max-width: 200px;
+}
+
+.mgl_flash-message {
+    margin: 20px !important;
 }

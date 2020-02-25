@@ -22,8 +22,8 @@
 
 (declare GiftList)
 
-(defsc GiftForm [this {::gift/keys [name gift-list-id] :as gift}]
-  {:query [::gift/id ::gift/name ::gift/gift-list-id fs/form-config-join]
+(defsc GiftForm [this {::gift/keys [name gift-list-id] :ui/keys [submitting] :as gift}]
+  {:query [::gift/id ::gift/name ::gift/gift-list-id fs/form-config-join :ui/submitting]
    :ident ::gift/id
    :form-fields #{::gift/name}}
   (let [validity (fs/get-spec-validity gift ::gift/name)]
@@ -31,17 +31,11 @@
       (ui-form {:onSubmit (fn [evt]
                             (if-not (= :valid validity)
                               (comp/transact! this [(fs/mark-complete! {})])
-                              (do
-                                (comp/transact! this [(model.gift/create-gift
-                                                        (select-keys gift
-                                                          [::gift/id ::gift/name ::gift/gift-list-id]))])
-                                (merge/merge-component! this GiftList
-                                  {::gift-list/id gift-list-id
-                                   :ui/gift-form (fs/add-form-config
-                                                   GiftForm
-                                                   {::gift/id (random-uuid)
-                                                    ::gift/name ""
-                                                    ::gift/gift-list-id gift-list-id})}))))}
+                              (comp/transact! this [(model.gift/create-gift
+                                                      (assoc (select-keys gift
+                                                               [::gift/id ::gift/name ::gift/gift-list-id])
+                                                        :ui/wrapper-class GiftList
+                                                        :ui/form-class GiftForm))])))}
         (ui-form-input {:placeholder "A pony"
                         :className "mgl_text-input"
                         :onChange (fn [evt]
@@ -52,6 +46,7 @@
                         :value name})
         (ui-button {:type "submit"
                     :primary true
+                    :loading submitting
                     :disabled (= :invalid validity)}
           "Submit")))))
 
@@ -81,7 +76,8 @@
                                                   GiftForm
                                                   {::gift/id (random-uuid)
                                                    ::gift/name ""
-                                                   ::gift/gift-list-id id}))))
+                                                   ::gift/gift-list-id id
+                                                   :ui/submitting false}))))
                        (df/load app [::gift-list/id id] GiftList
                          {:post-mutation `dr/target-ready
                           :post-mutation-params {:target [::gift-list/id id]}})))))}

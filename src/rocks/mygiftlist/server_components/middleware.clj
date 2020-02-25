@@ -1,5 +1,6 @@
 (ns rocks.mygiftlist.server-components.middleware
   (:require [mount.core :refer [defstate]]
+            [rocks.mygiftlist.type.error :as error]
             [rocks.mygiftlist.server-components.db :as db]
             [rocks.mygiftlist.server-components.pathom :as parser]
             [rocks.mygiftlist.config :as config]
@@ -11,6 +12,7 @@
             [ring.middleware.jwt :as jwt]
             [ring.middleware.gzip :as gzip]
             [taoensso.timbre :as log]
+            [com.wsscode.pathom.core :as p]
             [next.jdbc :as jdbc]))
 
 (defn not-found-handler [_]
@@ -20,10 +22,12 @@
 (defn wrap-api [handler uri pool]
   (fn [request]
     (if (= uri (:uri request))
-      (handle-api-request
-        (:transit-params request)
-        (fn [tx] (parser/parser {:ring/request request
-                                 ::db/pool pool} tx)))
+      (let [result (parser/parser {:ring/request request}
+                     (:transit-params request))
+            errors (sequence (keep (comp ::p/error val)) result)]
+        (log/debug "result" result)
+        (assoc-in {:status (if (seq errors) 500 200) :body result}
+          [:headers "Content-Type"] "application/transit+json"))
       (handler request))))
 
 (defn wrap-healthcheck [handler uri pool]

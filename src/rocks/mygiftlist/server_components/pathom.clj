@@ -53,6 +53,10 @@
                       {::p/mutate  pc/mutate-async
                        ::p/env     {::p/reader               [p/map-reader pc/parallel-reader
                                                               pc/open-ident-reader p/env-placeholder-reader]
+                                    ::p/process-error (fn [env e]
+                                                        (log/error (p/error-str e))
+                                                        (log/error (with-out-str (.printStackTrace e)))
+                                                        {::p/error (ex-data e)})
                                     ::p/placeholder-prefixes #{">"}}
                        ::p/plugins [(pc/connect-plugin {::pc/register all-resolvers})
                                     (p/env-wrap-plugin (fn [env]

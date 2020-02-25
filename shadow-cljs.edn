@@ -30,4 +30,7 @@
                  :closure-defines {rocks.mygiftlist.config/AUTH0_CLIENT_ID "M7rSTO4mTP8V2Z3vBgynF2JZ0q7bVJGC"
                                    rocks.mygiftlist.config/AUTH0_DOMAIN "mygiftlistrocks.auth0.com"
                                    rocks.mygiftlist.config/AUTH0_AUDIENCE "https://mygiftlist.rocks"
-                                   rocks.mygiftlist.config/AUTH0_CONNECTION "Username-Password-Authentication"}}}}
+                                   rocks.mygiftlist.config/AUTH0_CONNECTION "Username-Password-Authentication"
+
+                                   com.wsscode.pathom.misc.INCLUDE_SPECS false
+                                   edn-query-language.core.INCLUDE_SPECS false}}}}

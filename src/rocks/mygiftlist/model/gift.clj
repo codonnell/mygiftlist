@@ -3,12 +3,14 @@
    [com.wsscode.pathom.connect :as pc :refer [defresolver defmutation]]
    [honeysql.helpers :as sqlh]
    [next.jdbc :as jdbc]
+   [cognitect.anomalies :as anom]
    [rocks.mygiftlist.server-components.db :as db]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
    [rocks.mygiftlist.type.gift-list.invitation :as invitation]
-   [rocks.mygiftlist.type.gift-list.revocation :as revocation]))
+   [rocks.mygiftlist.type.gift-list.revocation :as revocation])
+  (:import [org.postgresql.util PSQLException]))
 
 (defn with-gift-access-control
   "Given a query selecting gift data with gift aliased as g, updates the query so
@@ -48,18 +50,22 @@
 (defmutation create-gift [{::db/keys [pool] :keys [requester-auth0-id]} {::gift/keys [gift-list-id] :as gift}]
   {::pc/input #{::gift/id ::gift/name ::gift/gift-list-id}
    ::pc/output [::gift/id]}
-  (jdbc/with-transaction [tx pool {:isolation :serializable}]
-    (when (seq (db/execute! tx {:select [1]
+  (try
+    (jdbc/with-transaction [tx pool {:isolation :serializable}]
+      (when (seq (db/execute! tx {:select [1]
                                   :from [[:gift_list_access :gla]]
                                   :where [:and
                                           [:= :gla.auth0_id requester-auth0-id]
                                           [:= :gla.gift_list_id gift-list-id]]}))
-      (db/execute! tx
-        {:insert-into :gift
-         :values [(assoc gift ::gift/requested-by-id {:select [:id]
-                                                      :from [:user]
-                                                      :where [:= :auth0_id requester-auth0-id]})]
-         :returning [:id]}))))
+        (db/execute! tx
+          {:insert-into :gift
+           :values [(assoc gift ::gift/requested-by-id {:select [:id]
+                                                        :from [:user]
+                                                        :where [:= :auth0_id requester-auth0-id]})]
+           :returning [:id]})))
+    (catch Throwable e
+      (throw (ex-info "Error creating gift" {::anom/category ::anom/fault
+                                             ::anom/message (.getMessage e)})))))
 
 (def gift-resolvers
   [gift-by-id-resolver
@@ -73,10 +79,10 @@
                      :id #uuid "e55e8bf0-aaff-4494-960d-2660609898aa"
                      :name "A pony"})
   (db/execute! db/pool {:select [1]
-                   :from [[:gift_list_access :gla]]
-                   :where [:and
-                           [:= :gla.auth0_id requester-auth0-id]
-                           [:= :gla.gift_list_id gift-list-id]]})
+                        :from [[:gift_list_access :gla]]
+                        :where [:and
+                                [:= :gla.auth0_id requester-auth0-id]
+                                [:= :gla.gift_list_id gift-list-id]]})
   (db/execute! db/pool
     {:insert-into :gift
      :values [(assoc gift ::gift/requested-by-id {:select [:id]

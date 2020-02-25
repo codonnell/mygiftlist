@@ -105,15 +105,28 @@
 
 (def ui-main-router (comp/factory MainRouter))
 
-(defsc Root [this {:root/keys [router navbar left-nav] :as props}]
+(defsc FlashMessage [this {:ui/keys [message type active]}]
+  {:query [:ui/active :ui/message :ui/type]
+   :ident (fn [] [:component/id :flash-message])
+   :initial-state {:ui/active false}}
+  (when active
+    (dom/div :.ui.message.mgl_flash-message {:className (name type)}
+      (dom/p message))))
+
+(def ui-flash-message (comp/factory FlashMessage))
+
+(defsc Root [this {:root/keys [router flash-message navbar left-nav] :as props}]
   {:query [{:root/router (comp/get-query MainRouter)}
+           {:root/flash-message (comp/get-query FlashMessage)}
            {:root/navbar (comp/get-query ui.nav/Navbar)}
            {:root/left-nav (comp/get-query ui.nav/LeftNav)}]
    :initial-state {:root/router {}
+                   :root/flash-message {}
                    :root/navbar {}
                    :root/left-nav {}}}
   (dom/div {}
     (ui.nav/ui-navbar navbar)
+    (ui-flash-message flash-message)
     (dom/div :.home.container
       (ui.nav/ui-left-nav left-nav)
       (ui-main-router router))))
