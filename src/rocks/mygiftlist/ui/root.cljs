@@ -4,6 +4,7 @@
             [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.type.gift-list :as gift-list]
             [rocks.mygiftlist.type.user :as user]
+            [rocks.mygiftlist.ui.flash-message :as flash]
             [rocks.mygiftlist.ui.navigation :as ui.nav]
             [rocks.mygiftlist.ui.gift-list :as ui.gift-list]
 
@@ -23,6 +24,7 @@
 
             [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
             [com.fulcrologic.semantic-ui.collections.form.ui-form-input :refer [ui-form-input]]
+
             [taoensso.timbre :as log]))
 
 (declare Home)
@@ -105,19 +107,9 @@
 
 (def ui-main-router (comp/factory MainRouter))
 
-(defsc FlashMessage [this {:ui/keys [message type active]}]
-  {:query [:ui/active :ui/message :ui/type]
-   :ident (fn [] [:component/id :flash-message])
-   :initial-state {:ui/active false}}
-  (when active
-    (dom/div :.ui.message.mgl_flash-message {:className (name type)}
-      (dom/p message))))
-
-(def ui-flash-message (comp/factory FlashMessage))
-
 (defsc Root [this {:root/keys [router flash-message navbar left-nav] :as props}]
   {:query [{:root/router (comp/get-query MainRouter)}
-           {:root/flash-message (comp/get-query FlashMessage)}
+           {:root/flash-message (comp/get-query flash/FlashMessage)}
            {:root/navbar (comp/get-query ui.nav/Navbar)}
            {:root/left-nav (comp/get-query ui.nav/LeftNav)}]
    :initial-state {:root/router {}
@@ -126,7 +118,7 @@
                    :root/left-nav {}}}
   (dom/div {}
     (ui.nav/ui-navbar navbar)
-    (ui-flash-message flash-message)
+    (flash/ui-flash-message flash-message)
     (dom/div :.home.container
       (ui.nav/ui-left-nav left-nav)
       (ui-main-router router))))
