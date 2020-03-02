@@ -1,8 +1,10 @@
 (ns rocks.mygiftlist.ui.gift-list
   (:require
    [rocks.mygiftlist.model.gift :as model.gift]
+   [rocks.mygiftlist.model.gift-list.invitation :as model.invitation]
    [rocks.mygiftlist.type.gift :as gift]
    [rocks.mygiftlist.type.gift-list :as gift-list]
+   [rocks.mygiftlist.type.gift-list.invitation :as invitation]
    [rocks.mygiftlist.type.user :as user]
    [rocks.mygiftlist.ui.navigation :as ui.nav]
 
@@ -16,8 +18,11 @@
    [com.fulcrologic.fulcro.mutations :as m]
 
    [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
+   [com.fulcrologic.semantic-ui.elements.icon.ui-icon :refer [ui-icon]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form :refer [ui-form]]
    [com.fulcrologic.semantic-ui.collections.form.ui-form-input :refer [ui-form-input]]
+
+   [goog.object :as gobj]
    ))
 
 (declare GiftList)
@@ -59,10 +64,34 @@
 
 (def ui-gift (comp/factory Gift {:keyfn ::gift/id}))
 
-(defsc GiftList [this {:ui/keys [gift-form] ::gift-list/keys [id name gifts]}]
+(defsc InvitationLabel [this {::invitation/keys [id token]}]
+  {:query [::invitation/id ::invitation/token]
+   :ident ::invitation/id
+   :initLocalState (fn [this _]
+                     {:save-ref (fn [r] (gobj/set this "label-ref" r))})}
+  (let [save-ref (comp/get-state this :save-ref)
+        invite-link (str js/location.protocol "//" js/location.host "/invite/" token)]
+    (when token
+      (comp/fragment
+        (dom/div :.ui.left.pointing.label {:ref save-ref} invite-link)
+        (dom/a {:href "#"
+                :onClick (fn [_]
+                           (let [el (gobj/get this "label-ref")]
+                             (js/console.log el)
+                             (.. js/window
+                               getSelection
+                               (selectAllChildren el))
+                             (.execCommand js/document "copy")))}
+          ;; TODO: Make this text smaller
+          "Copy!")))))
+
+(def ui-invitation-label (comp/factory InvitationLabel))
+
+(defsc GiftList [this {:ui/keys [gift-form] ::gift-list/keys [id name gifts invitation]}]
   {:query [::gift-list/id ::gift-list/name
            {:ui/gift-form (comp/get-query GiftForm)}
-           {::gift-list/gifts (comp/get-query Gift)}]
+           {::gift-list/gifts (comp/get-query Gift)}
+           {::gift-list/invitation (comp/get-query InvitationLabel)}]
    :ident ::gift-list/id
    :route-segment ["gift-list" ::gift-list/id]
    :will-enter (fn [{::app/keys [state-atom] :as app} {::gift-list/keys [id]}]
@@ -82,7 +111,18 @@
                          {:post-mutation `dr/target-ready
                           :post-mutation-params {:target [::gift-list/id id]}})))))}
   (dom/div {}
-    (dom/h3 {} name)
+    (dom/h3 {}
+      name
+      (ui-icon {:size "small"
+                :link true
+                :name "share alternate"
+                :onClick (fn [_]
+                           (comp/transact! this [{(model.invitation/create-invitation
+                                                    {::gift-list/id id})
+                                                  [::invitation/id ::invitation/token]}]))})
+      (ui-invitation-label invitation)
+      #_(when-some [token (::invitation/token invitation)]
+        (ui-label {:pointing "left"} (str js/location.protocol "//" js/location.host "/invite/" token))))
     (ui-gift-form gift-form)
     (mapv ui-gift gifts)))
 
