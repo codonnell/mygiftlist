@@ -16,7 +16,6 @@
             [com.fulcrologic.fulcro.mutations :as m]
             [com.fulcrologic.fulcro.routing.dynamic-routing :as dr :refer [defrouter]]
 
-            [com.fulcrologic.semantic-ui.elements.button.ui-button :refer [ui-button]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu :refer [ui-menu]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-menu :refer [ui-menu-menu]]
             [com.fulcrologic.semantic-ui.collections.menu.ui-menu-header :refer [ui-menu-header]]
@@ -55,9 +54,10 @@
                         :error (and (= :invalid validity) "Gift list name cannot be blank")
                         :fluid true
                         :value name})
-        (ui-button {:type "submit"
-                    :primary true
-                    :disabled (= :invalid validity)}
+        (dom/button :.button
+          {:type "submit"
+           :primary true
+           :disabled (= :invalid validity)}
           "Submit")))))
 
 (def ui-gift-list-form (comp/factory GiftListForm))
@@ -94,9 +94,7 @@
    :initial-state {}}
   (dom/div :.login.container
     (dom/div "In order to view and create gift lists, you need to...")
-    (dom/div (ui-button {:primary true
-                         :className "login combined-button"
-                         :onClick #(auth/login)}
+    (dom/div (dom/button :.button {:onClick #(auth/login)}
                "Log in or sign up"))))
 
 (defrouter MainRouter [_ {:keys [current-state] :as props}]
