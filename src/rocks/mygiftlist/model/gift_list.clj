@@ -58,23 +58,23 @@
       :where [:= :u.auth0_id requester-auth0-id]
       :order-by [[:gl.created_at :desc]]})})
 
-;; TODO: Don't return duplicates of the same gift list
 (defresolver invited-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
   {:invited-gift-lists
-   (db/execute! pool
-     {:select [:gl.id]
-      :from [[:gift_list :gl]]
-      :join [[:invitation :i] [:= :i.gift_list_id :gl.id]
-             [:invitation_acceptance :ia] [:= :ia.invitation_id :i.id]
-             [:user :u] [:= :u.id :ia.accepted_by_id]]
-      :left-join [[:revocation :r] [:and
-                                    [:= :r.revoked_user_id :u.id]
-                                    [:= :r.gift_list_id :gl.id]]]
-      :where [:and
-              [:= :u.auth0_id requester-auth0-id]
-              [:= :r.id nil]]
-      :order-by [[:gl.created_at :desc]]})})
+   (->> {:select [:gl.id]
+         :from [[:gift_list :gl]]
+         :join [[:invitation :i] [:= :i.gift_list_id :gl.id]
+                [:invitation_acceptance :ia] [:= :ia.invitation_id :i.id]
+                [:user :u] [:= :u.id :ia.accepted_by_id]]
+         :left-join [[:revocation :r] [:and
+                                       [:= :r.revoked_user_id :u.id]
+                                       [:= :r.gift_list_id :gl.id]]]
+         :where [:and
+                 [:= :u.auth0_id requester-auth0-id]
+                 [:= :r.id nil]]
+         :order-by [[:gl.created_at :desc]]}
+     (db/execute! pool)
+     (into [] (distinct)))})
 
 (defmutation create-gift-list [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id name]}]
   {::pc/params #{::gift-list/id ::gift-list/name}
