@@ -53,10 +53,11 @@
   (try
     (jdbc/with-transaction [tx pool {:isolation :serializable}]
       (when (seq (db/execute! tx {:select [1]
-                                  :from [[:gift_list_access :gla]]
+                                  :from [[:gift_list :gl]]
+                                  :join [[:user :u] [:= :u.id :gl.created_by_id]]
                                   :where [:and
-                                          [:= :gla.auth0_id requester-auth0-id]
-                                          [:= :gla.gift_list_id gift-list-id]]}))
+                                          [:= :u.auth0_id requester-auth0-id]
+                                          [:= :gl.id gift-list-id]]}))
         (db/execute! tx
           {:insert-into :gift
            :values [(assoc gift ::gift/requested-by-id {:select [:id]
