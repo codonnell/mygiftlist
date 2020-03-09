@@ -3,6 +3,7 @@
             [rocks.mygiftlist.model.gift-list :as model.gift-list]
             [rocks.mygiftlist.routing :as routing]
             [rocks.mygiftlist.type.gift-list :as gift-list]
+            [rocks.mygiftlist.type.gift-list.invitation :as invitation]
             [rocks.mygiftlist.type.user :as user]
             [rocks.mygiftlist.ui.flash-message :as flash]
             [rocks.mygiftlist.ui.navigation :as ui.nav]
@@ -69,6 +70,17 @@
    :route-segment ["loading"]}
   (dom/div "Loading..."))
 
+;; TODO: Give this appropriate UI
+(defsc Invitation [this _]
+  {:query []
+   :ident (fn [] [:component/id ::invitation])
+   :initial-state {}
+   :route-segment ["invitation" ::invitation/id]}
+  (dom/div {}
+    "Invitation page"))
+
+
+
 (defsc Home [this {:ui/keys [gift-list-form] :as props}]
   {:query [{:ui/gift-list-form (comp/get-query GiftListForm)}]
    :ident (fn [] [:component/id :home])
@@ -99,8 +111,9 @@
                          :onClick #(auth/login)}
                "Log in or sign up"))))
 
+;; TODO: Display gift list differently when not owner
 (defrouter MainRouter [_ {:keys [current-state] :as props}]
-  {:router-targets [Loading LoginForm Home ui.gift-list/GiftList]}
+  {:router-targets [Loading LoginForm Home ui.gift-list/GiftList Invitation]}
   (case current-state
     :pending (dom/div "Pending...")
     (dom/div "Loading...")))

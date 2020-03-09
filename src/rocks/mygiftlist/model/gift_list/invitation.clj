@@ -39,14 +39,19 @@
   the query so that only invitations the requester has access to are returned.
 
   In particular, users should only be able to access invitations for gift lists
-  they have created."
+  they have created or accepted."
   [requester-auth0-id query]
   (-> query
     (sqlh/merge-join
       [:gift_list :perm_gl] [:= :perm_gl.id :i.gift_list_id]
       [:user :perm_u] [:= :perm_u.id :perm_gl.created_by_id])
+    (sqlh/merge-left-join
+      [:invitation_acceptance :perm_ia] [:= :perm_ia.invitation_id :i.id]
+      [:user :perm_iau] [:= :perm_iau.id :perm_ia.accepted_by_id])
     (sqlh/merge-where
-      [:= :perm_u.auth0_id requester-auth0-id])))
+      [:or
+       [:= :perm_u.auth0_id requester-auth0-id]
+       [:= :perm_iau.auth0_id requester-auth0-id]])))
 
 (defresolver invitation-by-id-resolver
   [{::db/keys [pool] :keys [requester-auth0-id]} inputs]
@@ -86,6 +91,9 @@
       :join [[:user :u] [:= :u.id :i.created_by_id]]
       :where [:= :u.auth0_id requester-auth0-id]})})
 
+(def invitation-acceptance-invitation-id->invitation-id-resolver
+  (pc/alias-resolver ::invitation-acceptance/invitation-id ::invitation/id))
+
 (defmutation create-invitation
   [{::db/keys [pool] :keys [requester-auth0-id]} {::gift-list/keys [id]}]
   {::pc/params #{::gift-list/id}
@@ -109,18 +117,11 @@
            :returning [:id]})))))
 
 (defmutation accept-invitation
-  [{::db/keys [pool] :keys [requester-auth0-id]} {::user/keys [id] ::invitation/keys [token]}]
-  {::pc/params #{::user/id ::invitation/token}
-   ::pc/output [::invitation-acceptance/id]}
+  [{::db/keys [pool] :keys [requester-auth0-id]} {::invitation/keys [token]}]
+  {::pc/params #{::invitation/token}
+   ::pc/output [::invitation-acceptance/id ::invitation-acceptance/invitation-id]}
   (jdbc/with-transaction [tx pool {:isolation :serializable}]
-    (let [user-id-matches-requester
-          (seq (db/execute! tx
-                 {:select [1]
-                  :from [[:user :u]]
-                  :where [:and
-                          [:= :u.id id]
-                          [:= :u.auth0_id requester-auth0-id]]}))
-          user-didnt-create-invitation
+    (let [user-didnt-create-invitation
           (empty? (db/execute! tx
                     {:select [1]
                      :from [[:invitation :i]]
@@ -133,7 +134,7 @@
                  {:select [1]
                   :from [[:invitation :i]]
                   :where [:< (Instant/now) :i.expires_at]}))]
-      (when (and user-id-matches-requester user-didnt-create-invitation invitation-hasnt-expired)
+      (when (and user-didnt-create-invitation invitation-hasnt-expired)
         (db/execute-one! tx
           {:insert-into :invitation-acceptance
            :values [{:invitation-id {:select [:id]
@@ -147,11 +148,12 @@
                     ;; clause returns an id when the invitation has previously
                     ;; been accepted. (Upsert semantics)
                     :do-update-set [:invitation_id :accepted_by_id]}
-           :returning [:id]})))))
+           :returning [:id :invitation_id]})))))
 
 (def invitation-resolvers [invitation-by-id-resolver
                            invitation-by-token-resolver
                            created-invitations-resolver
+                           invitation-acceptance-invitation-id->invitation-id-resolver
                            create-invitation
                            accept-invitation])
 

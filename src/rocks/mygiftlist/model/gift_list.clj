@@ -58,6 +58,7 @@
       :where [:= :u.auth0_id requester-auth0-id]
       :order-by [[:gl.created_at :desc]]})})
 
+;; TODO: Don't return duplicates of the same gift list
 (defresolver invited-gift-lists-resolver [{::db/keys [pool] :keys [requester-auth0-id]} _]
   {::pc/output [{:invited-gift-lists [::gift-list/id]}]}
   {:invited-gift-lists

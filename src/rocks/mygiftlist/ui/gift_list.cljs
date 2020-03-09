@@ -70,7 +70,7 @@
    :initLocalState (fn [this _]
                      {:save-ref (fn [r] (gobj/set this "label-ref" r))})}
   (let [save-ref (comp/get-state this :save-ref)
-        invite-link (str js/location.protocol "//" js/location.host "/invite/" token)]
+        invite-link (str js/location.protocol "//" js/location.host "/invitation/" token)]
     (when token
       (comp/fragment
         (dom/div :.ui.left.pointing.label {:ref save-ref} invite-link)
